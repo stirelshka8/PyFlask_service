@@ -1,15 +1,16 @@
-from db_manager import db, Articles, User
 from flask import Flask, render_template, flash, redirect, request, url_for, session
-from forms import RegisterForm
-from passlib.hash import sha256_crypt
+from flask_login import LoginManager, login_required
 from flask_paginate import Pagination, get_page_args
-from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField
-from wtforms.validators import DataRequired
+from forms import RegisterForm, ArticleForm
+from db_manager import db, Articles, User
+from passlib.hash import sha256_crypt
 from flask_ckeditor import CKEditor
 
 app = Flask(__name__)
+login_manager = LoginManager()
+login_manager.init_app(app)
 ckeditor = CKEditor(app)
+
 
 app.secret_key = 'Secret145'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///myflaskblog.db'
@@ -17,6 +18,18 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.query(User).get(user_id)
+
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    flash('Доступ разрешен только авторизованным!', 'danger')
+    return redirect(url_for('login'))
 
 
 @app.route('/')
@@ -44,10 +57,17 @@ def articles():
     return render_template('articles.html', articles_list=articles_list, pagination=pagination)
 
 
+#TODO Исправить ошибку при который авторизированный пользователь не может получить доступ
 @app.route('/article/<int:id>/')
+@login_required
 def display_article(id):
-    article = db.session.query(Articles).get(id)  # Получить статью по её ID из базы данных
-    return render_template('article.html', article=article)
+    print(session)
+    article = Articles.query.get(id)
+    if article:
+        return render_template('article.html', article=article)
+    else:
+        flash('Статья не найдена', 'danger')
+        return redirect(url_for('articles'))
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -58,6 +78,18 @@ def register():
         email = form.email.data
         username = form.username.data
         password = sha256_crypt.hash(str(form.password.data))
+
+        # Check if a user with the same username or email already exists
+        existing_user = User.query.filter_by(username=username).first()
+        existing_email = User.query.filter_by(email=email).first()
+
+        if existing_user:
+            flash('Пользователь с таким именем уже существует.', 'danger')
+            return redirect(url_for('register'))
+
+        if existing_email:
+            flash('Пользователь с таким email уже существует.', 'danger')
+            return redirect(url_for('register'))
 
         new_user = User(name=name, email=email, username=username, password=password)
 
@@ -82,11 +114,15 @@ def login():
 
         if user and sha256_crypt.verify(password_candidate, user.password):
             # Authentication successful
+            print(session)
             session['logged_in'] = True
             session['username'] = username
+            print(session)
+            app.logger.debug('Authentication successful')  # Добавьте логирование
             flash('Вы успешно авторизовались', 'success')
             return redirect(url_for('dashboard'))
         else:
+            app.logger.debug('Authentication failed')  # Добавьте логирование
             flash('Неверное имя пользователя или пароль', 'danger')
             return render_template('login.html')
 
@@ -98,11 +134,6 @@ def logout():
     session.clear()
     flash('Вы вышли из системы', 'success')
     return redirect(url_for('index'))
-
-
-class ArticleForm(FlaskForm):
-    title = StringField('title', validators=[DataRequired()])
-    body = TextAreaField('body', validators=[DataRequired()])
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])
@@ -128,9 +159,10 @@ def dashboard():
 
         pagination = Pagination(page=page, per_page=per_page, total=user_articles.total, css_framework='bootstrap4')
 
-        return render_template('dashboard.html', user=user, user_articles=user_articles, pagination=pagination, form=form)
+        return render_template('dashboard.html', user=user, user_articles=user_articles, pagination=pagination,
+                               form=form)
     else:
-        flash('You are not logged in!', 'danger')
+        flash('Вы не аутентифицированны!', 'danger')
         return redirect(url_for('login'))
 
 
