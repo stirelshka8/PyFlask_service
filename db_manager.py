@@ -1,16 +1,20 @@
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
 
 db = SQLAlchemy()
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):  # Обновленная модель User с UserMixin
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(40))
-    email = db.Column(db.String(35), unique=True)
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
     username = db.Column(db.String(30), unique=True)
     password = db.Column(db.String(100))
     articles = db.relationship('Articles', backref='author')  # Establish the relationship
+
+    def is_active(self):
+        return True  # Здесь вы можете реализовать логику проверки активности пользователя
 
 
 class Articles(db.Model):

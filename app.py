@@ -1,5 +1,5 @@
 from flask import Flask, render_template, flash, redirect, request, url_for, session
-from flask_login import LoginManager, login_required
+from flask_login import login_required, current_user, LoginManager, login_user
 from flask_paginate import Pagination, get_page_args
 from forms import RegisterForm, ArticleForm
 from db_manager import db, Articles, User
@@ -10,7 +10,6 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 ckeditor = CKEditor(app)
-
 
 app.secret_key = 'Secret145'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///myflaskblog.db'
@@ -23,7 +22,6 @@ with app.app_context():
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.query(User).get(user_id)
-
 
 
 @login_manager.unauthorized_handler
@@ -57,12 +55,10 @@ def articles():
     return render_template('articles.html', articles_list=articles_list, pagination=pagination)
 
 
-#TODO Исправить ошибку при который авторизированный пользователь не может получить доступ
 @app.route('/article/<int:id>/')
 @login_required
 def display_article(id):
-    print(session)
-    article = Articles.query.get(id)
+    article = db.session.get(Articles, id)
     if article:
         return render_template('article.html', article=article)
     else:
@@ -114,15 +110,12 @@ def login():
 
         if user and sha256_crypt.verify(password_candidate, user.password):
             # Authentication successful
-            print(session)
             session['logged_in'] = True
             session['username'] = username
-            print(session)
-            app.logger.debug('Authentication successful')  # Добавьте логирование
+            login_user(user)  # Войти в систему пользователем с помощью Flask-Login
             flash('Вы успешно авторизовались', 'success')
             return redirect(url_for('dashboard'))
         else:
-            app.logger.debug('Authentication failed')  # Добавьте логирование
             flash('Неверное имя пользователя или пароль', 'danger')
             return render_template('login.html')
 
@@ -154,16 +147,19 @@ def dashboard():
             db.session.commit()
 
         user = User.query.filter_by(username=session['username']).first()
-        user_articles = (Articles.query.filter_by(author=user)
+        user_articles = (Articles.query.filter_by(author_id=user.id)
                          .order_by(Articles.date_created.desc()).paginate(page=page, per_page=per_page))
 
-        pagination = Pagination(page=page, per_page=per_page, total=user_articles.total, css_framework='bootstrap4')
+        total_articles = user_articles.total
 
-        return render_template('dashboard.html', user=user, user_articles=user_articles, pagination=pagination,
-                               form=form)
+        pagination = Pagination(page=page, per_page=per_page, total=total_articles, css_framework='bootstrap4')
+
+        return render_template('dashboard.html', user=user, user_articles=user_articles,
+                               total_articles=total_articles, pagination=pagination, form=form)
     else:
         flash('Вы не аутентифицированны!', 'danger')
         return redirect(url_for('login'))
+
 
 
 if __name__ == '__main__':
