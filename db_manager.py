@@ -1,20 +1,40 @@
+from datetime import datetime
+
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
+from flask_principal import RoleNeed, UserNeed
 
 db = SQLAlchemy()
 
 
-class User(db.Model, UserMixin):  # Обновленная модель User с UserMixin
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
     username = db.Column(db.String(30), unique=True)
     password = db.Column(db.String(100))
-    articles = db.relationship('Articles', backref='author')  # Establish the relationship
+    articles = db.relationship('Articles', backref='author')
+    roles = db.relationship('Role', secondary='user_roles')
 
     def is_active(self):
-        return True  # Здесь вы можете реализовать логику проверки активности пользователя
+        return True
+
+    def has_role(self, role_name):
+        related_roles = self.roles.all()
+        return any(role.name == role_name for role in related_roles)
+
+
+class Role(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(255))
+
+
+class UserRoles(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id', ondelete='CASCADE'))
 
 
 class Articles(db.Model):
@@ -23,6 +43,31 @@ class Articles(db.Model):
     body = db.Column(db.Text)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Reference to the User table
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+    likes = db.Column(db.Integer, default=0)
+
+    # New field to store users who liked the article
+    likes_users = db.relationship('User', secondary='article_likes', back_populates='liked_articles')
+
+
+# Intermediate table to store article likes
+class ArticleLikes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id', ondelete='CASCADE'))
+
+
+User.liked_articles = db.relationship('Articles', secondary='article_likes', back_populates='likes_users')
+
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text, nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
+
+    # Define a relationship with User model
+    author = db.relationship('User', backref='comments')
 
 
 def create_user(name, email, username, password):

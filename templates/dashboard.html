@@ -1,8 +1,8 @@
 {% extends 'layout.html' %}
-
-{% block body %}
-  <style>
-      .summary-button {
+{% block style%}
+<style>
+    /* Ваши стили здесь */
+    .summary-button {
       background-color: #3498db;
       padding: 5px;
       border: 1px solid #ccc;
@@ -16,18 +16,19 @@
       margin-bottom: 10px;
     }
     .prev {
-      background-color: #3498db;
-      padding: 5px;
-      border: 1px solid #ccc;
-      width: auto;
-      border-radius: 20px;
-      color: black;
-      font-family: Arial, sans-serif;
-      text-align: center;
+    background-color: #813124;
+    padding: 10px 20px;
+    border-radius: 20px;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     }
     .add-article-details,
     .user-articles-details {
-      margin-top: 20px; /* Отступ сверху */
+      margin-top: 20px;
     }
     .article-card {
       border: 1px solid #e0e0e0;
@@ -39,7 +40,7 @@
       margin-bottom: 20px;
     }
     .article-card:hover {
-      transform: translateX(-5px);
+      transform: translateY(-5px);
       box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     }
     .article-card .card-body {
@@ -54,7 +55,7 @@
       color: #555555;
       margin-bottom: 15px;
     }
-    .read-more-btn {
+    .custom-btn {
       background-color: #3498db;
       border: none;
       border-radius: 5px;
@@ -63,13 +64,31 @@
       font-size: 0.9rem;
       text-decoration: none;
       transition: background-color 0.2s;
+      margin-right: 5px;
     }
-    .read-more-btn:hover {
-      background-color: #268cd7;
+    .custom-btn:hover {
+      background-color: #6500db;
+    }
+
+    .edit-btn {
+      background-color: #813124;
+
+    }
+    .edit-btn:hover {
+      background-color: #6500db;
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+
+    }
+    .delete-btn:hover {
+      background-color: #6500db;
     }
   </style>
+{% endblock %}
 
-  <h1 class="prev">ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
+{% block body %}
+    <h1 class="prev">ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
   <section>
     <h3>Добавление статьи</h3>
     <details class="add-article-details">
@@ -100,17 +119,29 @@
     <details class="user-articles-details">
       <summary class="summary-button">Развернуть</summary>
         <div class="row">
-          {% for article in user_articles.items %}
-            <div class="col-md-4 mb-4">
-              <div class="article-card">
-                <div class="card-body">
-                  <h5 class="article-title">{{ article.title }}</h5>
-                  <p class="article-excerpt">{{ article.body[:100] }}{% if article.body|length > 100 %}...{% endif %}</p>
-                  <a href="{{ url_for('display_article', id=article.id) }}" class="read-more-btn">Read More</a>
-                </div>
+                  {% for article in user_articles.items %}
+          <div class="col-md-4 mb-4">
+            <div class="card article-card">
+              <div class="card-body">
+                <h5 class="card-title article-title">{{ article.title }}</h5>
+
+                <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+                  <button type="submit" class="custom-btn">Читать далее</button>
+                </form>
+
+                <form action="{{ url_for('edit_article', id=article.id) }}" style="display: inline-block;">
+                  <button type="submit" class="custom-btn edit-btn">Редактировать</button>
+                </form>
+
+
+                <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
+                  <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
+                </form>
               </div>
             </div>
-          {% endfor %}
+          </div>
+        {% endfor %}
+
         </div>
         <nav aria-label="Page navigation">
         <ul class="pagination justify-content-center">

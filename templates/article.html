@@ -1,10 +1,169 @@
 {% extends 'layout.html' %}
 
+{% block style%}
+<style>
+    .comment {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    }
+
+    .comment p {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .comment .meta {
+        font-size: 12px;
+        color: #777;
+    }
+     .custom-btn {
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      color: #ffffff;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: background-color 0.2s;
+      margin-right: 5px;
+    }
+    .custom-btn:hover {
+      background-color: #6500db;
+    }
+
+    .edit-btn {
+      background-color: #813124;
+
+    }
+    .edit-btn:hover {
+      background-color: #6500db;
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+
+    }
+    .delete-btn:hover {
+      background-color: #6500db;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+    }
+
+    .article {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .author-info {
+      font-style: italic;
+      color: #888;
+    }
+
+    .article-content img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+{% endblock %}
+
 {% block body %}
   <div class="article">
-    <h2>{{ article.title }}</h2>
-    <p>{{ article.body }}</p>
-    <p>Author: {{ article.author.username }}</p>
-    <p>Date Created: {{ article.date_created }}</p>
+    <h2>{{ title }}</h2>
+    <hr>
+      <div class="article-content">
+        {{ body | safe }}
+      </div>
+    <hr>
+    <p class="author-info">Авторъ: {{ author }}</p>
+    <p class="author-info">Дата создания:  {{ date_created }}</p>
+    <div class="article-actions">
+        <form method="post" action="{{ url_for('like_article', id=article.id) }}" style="display: inline-block;">
+            {{ form.hidden_tag() }}
+            <button type="submit" class="custom-btn edit-btn">
+                Мне нравится (
+                {{ article.likes }}
+                {% if article.likes == 1 %}
+                    отметка
+                {% elif article.likes > 1 and article.likes < 5 %}
+                    отметки
+                {% else %}
+                    отметок
+                {% endif %}
+                )
+            </button>
+        </form>
+
+        {% if current_user == author %}
+            <form action="{{ url_for('edit_article', id=article.id) }}" style="display: inline-block;">
+                <button type="submit" class="custom-btn edit-btn">Редактировать</button>
+            </form>
+
+            <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
+                <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
+            </form>
+        {% endif %}
+    </div>
+      <div class="comments">
+            <div class="comments-section">
+                <h3>Комментарии:</h3>
+                    {% for comment in comments %}
+                        <div class="comment">
+                            <p>{{ comment.body }}</p>
+                            <p class="meta">Автор: {{ comment.author.username }} | {{ comment.date_created.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        </div>
+                    {% endfor %}
+
+                    {% if pagination.pages > 1 %}
+                        <div class="pagination">
+                            {% if pagination.has_prev %}
+                                <a href="{{ url_for('display_article', id=article.id, page=pagination.prev_num) }}">« Предыдущая</a>
+                            {% endif %}
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num == pagination.page %}
+                                        <span class="current">{{ page_num }}</span>
+                                    {% else %}
+                                        <a href="{{ url_for('display_article', id=article.id, page=page_num) }}">{{ page_num }}</a>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="ellipsis">...</span>
+                                {% endif %}
+                            {% endfor %}
+                            {% if pagination.has_next %}
+                                <a href="{{ url_for('display_article', id=article.id, page=pagination.next_num) }}">Следующая »</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+            </div>
+            <form method="post" action="{{ url_for('add_comment', id=article.id) }}">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <label for="{{ form.body.id }}">Введите ваш комментарий:</label>
+                    {{ form.body(class="form-control", rows=5) }}
+                </div>
+                <button type="submit" class="btn btn-primary">Добавить комментарий</button>
+            </form>
+      </div>
   </div>
+
 {% endblock %}

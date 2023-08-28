@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Flask Blog</title>
+    <title>Super-Mega </title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    {% block style%}{% endblock%}
 </head>
 <body>
     {% include 'includes/_navbar.html' %}
@@ -11,7 +12,6 @@
     {% include 'includes/_messages.html' %}
         {% block body%}{% endblock%}
     </div>
-
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </body>
 </html>
