@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash, redirect, request, url_for, session, g
 from flask_login import login_required, current_user, LoginManager, login_user
-from flask_principal import Permission, RoleNeed, Principal
+from flask_principal import Principal, Permission, RoleNeed, PermissionDenied
 from flask_paginate import Pagination, get_page_args
 from db_manager import db, Articles, User, Comment
 from forms import RegisterForm, ArticleForm
@@ -14,8 +14,11 @@ import redis
 import os
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
+
+admin_permission = Permission(RoleNeed("admin"))
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -51,27 +54,13 @@ app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
 # Инициализация расширения сессий
 Session(app)
 
-super_admin_permission = Permission(RoleNeed('admin'))
-
 with app.app_context():
     db.create_all()
-
-
-@app.before_request
-def before_request():
-    g.user = current_user
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, user_id)
-
-
-# TODO: Рещить проблемму отсутствия доступа с правами
-@login_manager.unauthorized_handler
-def unauthorized():
-    flash('Доступ разрешен только авторизованным!', 'danger')
-    return redirect(url_for('login'))
 
 
 @app.route('/')
@@ -80,16 +69,13 @@ def index():
 
 
 @app.route('/stirelshka8')
-@super_admin_permission.require(http_exception=403)
+@login_required
 def admin_panel():
-    return "Welcome to the admin panel!"
-
-
-@app.errorhandler(403)
-def access_forbidden(error):
-    flash('Вы не имеете права доступа к этой страниц', 'danger')
-    return redirect(url_for('index'))
-
+    if current_user.has_role('admin'):
+        return "Добро пожаловать в панель администратора!"
+    else:
+        flash('У вас нет прав доступа к этой странице.', 'danger')
+        return redirect(url_for('index'))
 
 @app.route('/about')
 def about():
@@ -233,6 +219,12 @@ def login():
             # Authentication successful
             session['logged_in'] = True
             session['username'] = username
+
+            if user.has_role('admin'):
+                session['is_admin'] = True
+            else:
+                session['is_admin'] = False
+
             login_user(user)  # Войти в систему пользователем с помощью Flask-Login
             flash('Вы успешно авторизовались', 'success')
             return redirect(url_for('dashboard'))

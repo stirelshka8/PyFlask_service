@@ -19,7 +19,7 @@ class User(db.Model, UserMixin):
         return True
 
     def has_role(self, role_name):
-        related_roles = self.roles.all()
+        related_roles = self.roles  # Получаем список связанных ролей
         return any(role.name == role_name for role in related_roles)
 
 
