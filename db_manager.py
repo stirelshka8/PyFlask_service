@@ -1,9 +1,7 @@
-from datetime import datetime
-
-from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import sha256_crypt
-from flask_principal import RoleNeed, UserNeed
+from flask_login import UserMixin
+from datetime import datetime
 
 db = SQLAlchemy()
 

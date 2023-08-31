@@ -6,7 +6,16 @@ from db_manager import db, Articles, User, Comment
 from forms import RegisterForm, ArticleForm
 from passlib.hash import sha256_crypt
 from flask_ckeditor import CKEditor
+from flask_session import Session
+from dotenv import load_dotenv
+import datetime
 import markdown
+import redis
+import os
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -14,11 +23,35 @@ login_manager.init_app(app)
 ckeditor = CKEditor(app)
 principal = Principal(app)
 
-app.secret_key = 'Secret145'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///myflaskblog.db'
+app.secret_key = os.environ.get('SECRET')
+
+if (os.environ.get('DB_TYPE')).lower() == 'sqlite':
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///myflaskblog.db'
+elif (os.environ.get('DB_TYPE')).lower() == 'postgresql':
+    pass
+elif (os.environ.get('DB_TYPE')).lower() == 'mysql':
+    pass
+else:
+    exit('Неверно указаны настройки базы данных!')
+
 db.init_app(app)
 
-super_admin_permission = Permission(RoleNeed('SuperAdministrator'))
+# Настройки для подключения к Redis
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'flpy_'
+app.config['SESSION_REDIS'] = redis.StrictRedis(
+    host=os.environ.get('REDIS_HOST'),
+    port=os.environ.get('REDIS_PORT'),
+    db=os.environ.get('REDIS_DB'),
+    password=os.environ.get('REDIS_PASS')
+)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
+# Инициализация расширения сессий
+Session(app)
+
+super_admin_permission = Permission(RoleNeed('admin'))
 
 with app.app_context():
     db.create_all()
@@ -146,6 +179,8 @@ def delete_article(id):
     if current_user != article.author:
         flash('Вы не имеете права удалять эту статью.', 'danger')
     else:
+        Comment.query.filter_by(article_id=id).delete()
+
         db.session.delete(article)
         db.session.commit()
         flash('Статья успешно удалена.', 'success')
@@ -162,7 +197,6 @@ def register():
         username = form.username.data
         password = sha256_crypt.hash(str(form.password.data))
 
-        # Check if a user with the same username or email already exists
         existing_user = User.query.filter_by(username=username).first()
         existing_email = User.query.filter_by(email=email).first()
 

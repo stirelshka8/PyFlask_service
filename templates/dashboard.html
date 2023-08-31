@@ -84,6 +84,12 @@
     .delete-btn:hover {
       background-color: #6500db;
     }
+    .no-articles-message {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 10vh; /* Это обеспечит вертикальное выравнивание по центру на всю высоту экрана */
+    }
   </style>
 {% endblock %}
 
@@ -109,38 +115,50 @@
             });
         </script>
       </div>
-      <button type="submit" class="btn btn-primary">Add Article</button>
+      <button type="submit" class="btn btn-primary">Добавить</button>
       </form>
     </details>
   </section>
 
   <section>
     <h3>Ваши статьи [ {{ total_articles }} ]</h3>
+
+
+
     <details class="user-articles-details">
       <summary class="summary-button">Развернуть</summary>
         <div class="row">
-                  {% for article in user_articles.items %}
-          <div class="col-md-4 mb-4">
-            <div class="card article-card">
-              <div class="card-body">
-                <h5 class="card-title article-title">{{ article.title }}</h5>
 
-                <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
-                  <button type="submit" class="custom-btn">Читать далее</button>
-                </form>
+        {% if total_articles > 0 %}
+          {% for article in user_articles.items %}
+            <div class="col-md-4 mb-4">
+              <div class="card article-card">
+                <div class="card-body">
+                  <h5 class="card-title article-title">{{ article.title }}</h5>
 
-                <form action="{{ url_for('edit_article', id=article.id) }}" style="display: inline-block;">
-                  <button type="submit" class="custom-btn edit-btn">Редактировать</button>
-                </form>
+                  <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+                    <button type="submit" class="custom-btn">Читать далее</button>
+                  </form>
+
+                  <form action="{{ url_for('edit_article', id=article.id) }}" style="display: inline-block;">
+                    <button type="submit" class="custom-btn edit-btn">Редактировать</button>
+                  </form>
 
 
-                <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
-                  <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
-                </form>
+                  <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
+                    <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
-        {% endfor %}
+          {% endfor %}
+        {% else %}
+              <div class="no-articles-message">
+                  <h1>Нет статей. &#128546;</h1>
+              </div>
+        {% endif %}
+
+
 
         </div>
         <nav aria-label="Page navigation">
