@@ -1,0 +1,158 @@
+{% extends 'layout.html' %}
+{% block style %}
+  <style>
+    /* Ваши стили здесь */
+    .summary-button {
+      background-color: #3498db;
+      padding: 5px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      width: 100px;
+      border-radius: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .prev {
+      background-color: #813124;
+      padding: 10px 20px;
+      border-radius: 20px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .add-article-details,
+    .user-articles-details {
+      margin-top: 20px;
+    }
+    .article-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      background-color: #ffffff;
+      margin-bottom: 20px;
+    }
+    .article-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .article-card .card-body {
+      padding: 20px;
+    }
+    .article-title {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .article-excerpt {
+      font-size: 1rem;
+      color: #555555;
+      margin-bottom: 15px;
+    }
+    .custom-btn {
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      color: #ffffff;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: background-color 0.2s;
+      margin-right: 5px;
+    }
+    .custom-btn:hover {
+      background-color: #6500db;
+    }
+    .edit-btn {
+      background-color: #813124;
+    }
+    .edit-btn:hover {
+      background-color: #6500db;
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+    }
+    .delete-btn:hover {
+      background-color: #6500db;
+    }
+    .no-articles-message {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 10vh;
+    }
+    /* Стили для надписей "Добавить статью" и "Ваши статьи" */
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #3498db; /* Цвет можно настроить по вашему выбору */
+      text-transform: uppercase;
+    }
+    .rejection-comment {
+    background-color: red;
+    color: yellow;
+    text-align: center;
+    padding: 10px;
+    border-radius: 5px;
+    }
+  </style>
+{% endblock %}
+{% block body %}
+<div class="container">
+    <h1 class="section-title">{{ user.username }}</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Информация об авторе</h3>
+                    <ul>
+                        <li><strong>Имя автора:</strong> {{ user.name }}</li>
+                        <li><strong>Email:</strong> {{ user.email }}</li>
+                        <li><strong>Дата регистрации:</strong> {{ registration_date }}</li>
+                        <li><strong>Всего статей:</strong> {{ total_author_articles }}</li>
+                        <li><strong>Всего лайков:</strong> {{ total_author_likes }}</li>
+                        <li><strong>Статей отклонено:</strong> {{ total_rejected_articles }}</li>
+                        <li><strong>Статей удалено:</strong> {{ total_deleted_articles }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="section-title">Статьи автора</h2>
+    <div class="row">
+        {% if author_articles %}
+        {% for article in author_articles %}
+        <div class="col-md-4 mb-4">
+            <div class="article-card">
+                <div class="card-body">
+                    <h4 class="article-title">{{ article.title }}</h4>
+                    <h5 class="article-status">Статус: {{ article.status }}</h5>
+                    {% if article.status == 'отклонена' %}
+                        <p class="rejection-comment"><strong>Cтатья не прошла модерацию!</strong></p>
+                    {% else %}
+                        <p class="article-excerpt">{{ article.excerpt }}</p>
+                        <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+                            <button type="submit" class="custom-btn">Открыть</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-md-12">
+            <p>Автор еще не опубликовал статей.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

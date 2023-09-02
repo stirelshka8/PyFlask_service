@@ -2,10 +2,10 @@ from operator import or_
 
 from flask import Flask, render_template, flash, redirect, request, url_for, session, g
 from flask_login import login_required, current_user, LoginManager, login_user
-from flask_principal import Principal, Permission, RoleNeed, PermissionDenied
+from flask_principal import Principal, Permission, RoleNeed
 from flask_paginate import Pagination, get_page_args
-from db_manager import db, Articles, User, Comment
-from forms import RegisterForm, ArticleForm
+from db_manager import db, Articles, User, Comment, DeletedArticles
+from forms import RegisterForm, ArticleForm, UpdateUserInfoForm
 from passlib.hash import sha256_crypt
 from flask_ckeditor import CKEditor
 from flask_session import Session
@@ -76,11 +76,11 @@ def index():
     return render_template('home.html')
 
 
-@app.route('/admin', methods=['GET', 'POST'])
+@app.route('/moderate', methods=['GET', 'POST'])
 @login_required
-def admin_panel():
+def moderate():
     if current_user.has_role('admin'):
-        per_page = 12  # Number of articles per page
+        per_page = 12
         page = request.args.get('page', 1, type=int)
 
         if 'logged_in' in session:
@@ -93,8 +93,16 @@ def admin_panel():
                 article = Articles.query.get(article_id)
                 if article:
                     article.status = new_status
+
+                    if new_status == 'отклонена':
+                        rejection_comment = request.form.get('rejection_comment')
+                        article.rejection_comment = rejection_comment
+
+                        deleted_article = DeletedArticles(user=article.author, article=article)
+                        db.session.add(deleted_article)
+
                     db.session.commit()
-                    flash(f'Статус статьи с ID - {article_id} обновлен на "{new_status}".', 'success')
+                    flash(f'Статус статьи с ID {article_id} обновлен на "{new_status}".', 'success')
                 else:
                     flash(f'Статья с ID {article_id} не найдена.', 'danger')
 
@@ -107,8 +115,59 @@ def admin_panel():
 
             pagination = Pagination(page=page, per_page=per_page, total=total_articles, css_framework='bootstrap4')
 
-            return render_template('admin_panel.html', user=current_user, user_articles=user_articles,
+            return render_template('moderate.html', user=current_user, user_articles=user_articles,
                                    total_articles=total_articles, pagination=pagination, form=form)
+        else:
+            flash('У вас нет прав доступа к этой странице.', 'danger')
+            return redirect(url_for('index'))
+
+
+@app.route('/author_articles/<string:username>')
+@login_required
+def author_articles(username):
+    # Получите пользователя по имени пользователя
+    user = User.query.filter_by(username=username).first()
+
+    if user:
+        # Получите информацию о статьях автора
+        author_articles = Articles.query.filter_by(author=user).all()
+        total_author_articles = len(author_articles)
+        total_author_likes = sum(article.likes for article in author_articles)
+
+        if hasattr(user, 'registration_date'):
+            registration_date = user.registration_date.strftime('%Y-%m-%d')
+        else:
+            registration_date = "Дата регистрации не найдена"
+
+        total_rejected_articles = Articles.query.filter_by(author=user, status='отклонена').count()
+
+        # Получите информацию о удаленных статьях из таблицы DeletedArticles
+        total_deleted_articles = DeletedArticles.query.filter_by(user=user).count()
+
+
+        return render_template('author_articles.html', user=user, author_articles=author_articles,
+                               total_author_articles=total_author_articles, total_author_likes=total_author_likes,
+                               registration_date=registration_date, total_rejected_articles=total_rejected_articles,
+                               total_deleted_articles=total_deleted_articles)
+
+    else:
+        flash('Пользователь не найден', 'danger')
+        return redirect(url_for('moderate'))
+
+
+@app.route('/delete_rejected_articles', methods=['POST'])
+@login_required
+def delete_rejected_articles():
+    if current_user.has_role('admin'):
+        count_deleted_articles = Articles.query.filter_by(status='отклонена').delete()
+
+        if count_deleted_articles > 0:
+            db.session.commit()
+            flash(f'Успешно удалено {count_deleted_articles} статей со статусом "отклонена".', 'success')
+        else:
+            flash('Нет статей со статусом "отклонена" для удаления.', 'info')
+
+        return redirect(url_for('moderate'))
     else:
         flash('У вас нет прав доступа к этой странице.', 'danger')
         return redirect(url_for('index'))
@@ -144,8 +203,6 @@ def articles():
                            pagination=pagination)
 
 
-
-
 @app.route('/article/<int:id>/')
 @login_required
 def display_article(id):
@@ -155,9 +212,8 @@ def display_article(id):
     author = article.author.username
     date_created = article.date_created
 
-    # Get comments and paginate them
     page = request.args.get('page', type=int, default=1)
-    per_page = 10  # Number of comments per page
+    per_page = 10
     comments = Comment.query.filter_by(article_id=id).order_by(Comment.date_created.desc()).paginate(page=page,
                                                                                                      per_page=per_page,
                                                                                                      error_out=False)
@@ -205,8 +261,11 @@ def delete_article(id):
     if current_user != article.author:
         flash('Вы не имеете права удалять эту статью.', 'danger')
     else:
-        Comment.query.filter_by(article_id=id).delete()
+        # Создаем запись об удаленной статье в таблице DeletedArticles
+        deleted_article = DeletedArticles(user=current_user, article=article)
+        db.session.add(deleted_article)
 
+        Comment.query.filter_by(article_id=id).delete()
         db.session.delete(article)
         db.session.commit()
         flash('Статья успешно удалена.', 'success')
@@ -236,7 +295,6 @@ def register():
 
         new_user = User(name=name, email=email, username=username, password=password)
 
-        # Add the new user to the database
         db.session.add(new_user)
         db.session.commit()
 
@@ -256,7 +314,6 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and sha256_crypt.verify(password_candidate, user.password):
-            # Authentication successful
             session['logged_in'] = True
             session['username'] = username
 
@@ -265,14 +322,43 @@ def login():
             else:
                 session['is_admin'] = False
 
-            login_user(user)  # Войти в систему пользователем с помощью Flask-Login
-            flash('Вы успешно авторизовались', 'success')
+            login_user(user)
+
+            deleted_articles = DeletedArticles.query.filter_by(user=user, notified=False).all()
+
+            if deleted_articles:
+                flash(
+                    f'Внимание! У вас были удалены статьи. Было удалено {len(deleted_articles)} статей со статусом "отклонена".',
+                    'warning')
+
+                # Отмечаем оповещения как отправленные
+                for article in deleted_articles:
+                    article.notified = True
+                db.session.commit()
+            else:
+                flash('Вы успешно авторизовались', 'success')
+
             return redirect(url_for('dashboard'))
         else:
             flash('Неверное имя пользователя или пароль', 'danger')
             return render_template('login.html')
 
     return render_template('login.html')
+
+
+@app.route('/update_user_info', methods=['POST'])
+@login_required
+def update_user_info():
+    form = UpdateUserInfoForm(request.form)
+    if form.validate():
+        current_user.name = form.name.data
+        if form.new_password.data:
+            current_user.password = sha256_crypt.hash(str(form.new_password.data))
+        db.session.commit()
+        flash('Информация о пользователе успешно обновлена.', 'success')
+    else:
+        flash('Ошибка при обновлении информации о пользователе.', 'danger')
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/logout')
@@ -285,32 +371,32 @@ def logout():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    per_page = 12  # Number of articles per page
+    per_page = 12
     page = request.args.get('page', 1, type=int)
 
     if 'logged_in' in session:
+
         form = ArticleForm()
 
-        if request.method == 'POST':
-            title = request.form['title']
-            body = request.form['body']
-            author = User.query.filter_by(username=session['username']).first()
+        if request.method == 'POST' and form.validate():
+            title = form.title.data
+            body = form.body.data
+            author = current_user
+            status = 'ожидает модерации'
 
-            new_article = Articles(title=title, body=body, author=author, status='ожидает модерации')
+            new_article = Articles(title=title, body=body, author=author, status=status)
             db.session.add(new_article)
             db.session.commit()
 
+            flash('Статья успешно добавлена и ожидает модерации.', 'success')
+            return redirect(url_for('dashboard'))
+
         user = User.query.filter_by(username=session['username']).first()
 
-        if user.has_role('admin'):
-            user_articles = (Articles.query
-                             .order_by(Articles.date_created.desc())
-                             .paginate(page=page, per_page=per_page))
-        else:
-            user_articles = (Articles.query
-                             .filter_by(author_id=user.id, status='опубликована')
-                             .order_by(Articles.date_created.desc())
-                             .paginate(page=page, per_page=per_page))
+        user_articles = (Articles.query
+                         .filter_by(author=current_user)
+                         .order_by(Articles.date_created.desc())
+                         .paginate(page=page, per_page=per_page))
 
         total_articles = user_articles.total
 
@@ -345,7 +431,6 @@ def add_comment(id):
 def like_article(id):
     article = Articles.query.get_or_404(id)
 
-    # Check if the user has already liked the article
     if current_user in article.likes_users:
         article.likes -= 1
         article.likes_users.remove(current_user)

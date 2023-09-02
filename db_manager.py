@@ -14,6 +14,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(100))
     articles = db.relationship('Articles', backref='author')
     roles = db.relationship('Role', secondary='user_roles')
+    registration_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     def is_active(self):
         return True
@@ -43,8 +44,6 @@ class Articles(db.Model):
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     likes = db.Column(db.Integer, default=0)
     status = db.Column(db.String(50), default='ожидает модерации')
-
-    # New field to store users who liked the article
     likes_users = db.relationship('User', secondary='article_likes', back_populates='liked_articles')
 
 
@@ -53,6 +52,16 @@ class ArticleLikes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id', ondelete='CASCADE'))
+
+
+class DeletedArticles(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
+    article = db.relationship('Articles', foreign_keys=[article_id])
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', foreign_keys=[user_id])
+    deleted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    notified = db.Column(db.Boolean, default=False)  # Поле для отслеживания оповещения пользователя
 
 
 User.liked_articles = db.relationship('Articles', secondary='article_likes', back_populates='likes_users')
@@ -64,8 +73,6 @@ class Comment(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
-
-    # Define a relationship with User model
     author = db.relationship('User', backref='comments')
 
 

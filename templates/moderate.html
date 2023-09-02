@@ -78,6 +78,11 @@
 {% block body %}
 <h1>Модерация статей</h1>
 
+<form method="POST" action="{{ url_for('delete_rejected_articles') }}" class="mb-3">
+  {{ form.hidden_tag() }}
+  <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить все отклоненные статьи?')">Удалить все отклоненные статьи</button>
+</form>
+
 {% if user_articles.items %}
 <table>
   <thead>
@@ -96,7 +101,7 @@
       <td>{{ article.title }}</td>
       <td>{{ article.author.username }}</td>
       <td>
-        <form method="post" action="{{ url_for('admin_panel') }}">
+        <form method="post" action="{{ url_for('moderate') }}">
           <select name="new_status">
             <option value="ожидает модерации" {% if article.status == 'ожидает модерации' %}selected{% endif %}>Ожидает модерации</option>
             <option value="опубликована" {% if article.status == 'опубликована' %}selected{% endif %}>Опубликована</option>
@@ -108,6 +113,9 @@
       </td>
       <td>
         <a href="{{ url_for('display_article', id=article.id) }}" class="btn-view-article">Перейти к статье</a>
+        <a href="{{ url_for('author_articles', username=article.author.username) }}" class="btn-view-article">
+                Посмотреть статьи автора
+        </a>
         <!-- Здесь могут быть другие действия, например, удаление статьи -->
       </td>
     </tr>

@@ -95,16 +95,46 @@
       color: #3498db; /* Цвет можно настроить по вашему выбору */
       text-transform: uppercase;
     }
+    .rejection-comment {
+    background-color: red;
+    color: yellow;
+    text-align: center;
+    padding: 10px;
+    border-radius: 5px;
+    }
   </style>
 {% endblock %}
 
 {% block body %}
 <h1 class="prev">ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
 <section>
+  <h3 class="section-title">Изменение информации о пользователе</h3>
+  <details class="user-info-details">
+    <summary class="summary-button">Развернуть</summary>
+    <form method="POST" action="{{ url_for('update_user_info') }}" id="user-info-form">
+      {{ form.hidden_tag() }}
+      <div class="form-group">
+        <label for="name">Имя:</label>
+        <input type="text" id="name" class="form-control" name="name" value="{{ current_user.name }}" required>
+      </div>
+      <div class="form-group">
+        <label for="new_password">Новый пароль:</label>
+        <input type="password" id="new_password" class="form-control" name="new_password" required>
+      </div>
+      <div class="form-group">
+        <label for="confirm_password">Подтвердите новый пароль:</label>
+        <input type="password" id="confirm_password" class="form-control" name="confirm_password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+  </details>
+</section>
+<section>
   <h3 class="section-title">Добавление статьи</h3>
   <details class="add-article-details">
     <summary class="summary-button">Развернуть</summary>
     <form method="POST" action="{{ url_for('dashboard') }}" id="article-form">
+      {{ form.hidden_tag() }}
       <div class="form-group">
         <label for="title">Заголовок статьи:</label>
         <input type="text" id="title" class="form-control" name="title" required>
@@ -135,18 +165,30 @@
       <div class="col-md-4 mb-4">
         <div class="article-card">
           <div class="card-body">
-            <h5 class="card-title article-title">{{ article.title }}</h5>
-            <p class="article-status">Статус: {{ article.status }}</p>
-            <p class="article-excerpt">{{ article.excerpt }}</p>
-            <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
-              <button type="submit" class="custom-btn">Читать далее</button>
-            </form>
-            <form action="{{ url_for('edit_article', id=article.id) }}" style="display: inline-block;">
-              <button type="submit" class="custom-btn edit-btn">Редактировать</button>
-            </form>
-            <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
-              <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
-            </form>
+              <h4 class="card-title article-title">{{ article.title }}</h4>
+              <h5 class="article-status">Статус: {{ article.status }}</h5>
+
+              {% if article.status == 'отклонена' %}
+
+                <p class="rejection-comment"><strong>Ваша статья не прошла модерацию!</strong></p>
+                <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
+                  <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Данная статья будет удалена!')">Удалить</button>
+                </form>
+
+              {% else %}
+
+              <p class="article-excerpt">{{ article.excerpt }}</p>
+              <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+                <button type="submit" class="custom-btn">Открыть</button>
+              </form>
+              <form action="{{ url_for('edit_article', id=article.id) }}" style="display: inline-block;">
+                <button type="submit" class="custom-btn edit-btn">Редактировать</button>
+              </form>
+              <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
+                <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
+              </form>
+
+            {% endif %}
           </div>
         </div>
       </div>
@@ -156,6 +198,7 @@
         <h1>Нет статей. &#128546;</h1>
       </div>
       {% endif %}
+
     </div>
     <nav aria-label="Page navigation">
       <ul class="pagination justify-content-center">
