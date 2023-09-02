@@ -42,6 +42,7 @@ class Articles(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Reference to the User table
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     likes = db.Column(db.Integer, default=0)
+    status = db.Column(db.String(50), default='ожидает модерации')
 
     # New field to store users who liked the article
     likes_users = db.relationship('User', secondary='article_likes', back_populates='liked_articles')

@@ -1,3 +1,5 @@
+from operator import or_
+
 from flask import Flask, render_template, flash, redirect, request, url_for, session, g
 from flask_login import login_required, current_user, LoginManager, login_user
 from flask_principal import Principal, Permission, RoleNeed, PermissionDenied
@@ -63,19 +65,54 @@ def load_user(user_id):
     return db.session.get(User, user_id)
 
 
+@login_manager.unauthorized_handler
+def unauthorized():
+    flash('Доступ разрешен только авторизованным!', 'danger')
+    return render_template('home.html')
+
+
 @app.route('/')
 def index():
     return render_template('home.html')
 
 
-@app.route('/stirelshka8')
+@app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin_panel():
     if current_user.has_role('admin'):
-        return "Добро пожаловать в панель администратора!"
+        per_page = 12  # Number of articles per page
+        page = request.args.get('page', 1, type=int)
+
+        if 'logged_in' in session:
+            form = ArticleForm()
+
+            if request.method == 'POST':
+                article_id = request.form.get('article_id')
+                new_status = request.form.get('new_status')
+
+                article = Articles.query.get(article_id)
+                if article:
+                    article.status = new_status
+                    db.session.commit()
+                    flash(f'Статус статьи с ID - {article_id} обновлен на "{new_status}".', 'success')
+                else:
+                    flash(f'Статья с ID {article_id} не найдена.', 'danger')
+
+            user_articles = (Articles.query
+                             .filter_by(status='ожидает модерации')
+                             .order_by(Articles.date_created.desc())
+                             .paginate(page=page, per_page=per_page))
+
+            total_articles = user_articles.total
+
+            pagination = Pagination(page=page, per_page=per_page, total=total_articles, css_framework='bootstrap4')
+
+            return render_template('admin_panel.html', user=current_user, user_articles=user_articles,
+                                   total_articles=total_articles, pagination=pagination, form=form)
     else:
         flash('У вас нет прав доступа к этой странице.', 'danger')
         return redirect(url_for('index'))
+
 
 @app.route('/about')
 def about():
@@ -87,11 +124,12 @@ def articles():
     page, per_page, offset = get_page_args(page_parameter='page',
                                            per_page_parameter='per_page')
 
-    articles_list = Articles.query.order_by(Articles.date_created.desc()).paginate(page=page,
-                                                                                   per_page=per_page,
-                                                                                   error_out=False)
+    # Фильтруем статьи по статусу "опубликовано"
+    articles_list = (Articles.query
+                     .filter(Articles.status == 'опубликована')
+                     .order_by(Articles.date_created.desc())
+                     .paginate(page=page, per_page=per_page, error_out=False))
 
-    # Преобразование Markdown-текста статьи в HTML
     for article in articles_list.items:
         article.body = markdown.markdown(article.body)
 
@@ -104,6 +142,8 @@ def articles():
                            articles_list=articles_list,
                            total_articles=total_articles,
                            pagination=pagination)
+
+
 
 
 @app.route('/article/<int:id>/')
@@ -243,6 +283,7 @@ def logout():
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
     per_page = 12  # Number of articles per page
     page = request.args.get('page', 1, type=int)
@@ -255,13 +296,21 @@ def dashboard():
             body = request.form['body']
             author = User.query.filter_by(username=session['username']).first()
 
-            new_article = Articles(title=title, body=body, author=author)
+            new_article = Articles(title=title, body=body, author=author, status='ожидает модерации')
             db.session.add(new_article)
             db.session.commit()
 
         user = User.query.filter_by(username=session['username']).first()
-        user_articles = (Articles.query.filter_by(author_id=user.id)
-                         .order_by(Articles.date_created.desc()).paginate(page=page, per_page=per_page))
+
+        if user.has_role('admin'):
+            user_articles = (Articles.query
+                             .order_by(Articles.date_created.desc())
+                             .paginate(page=page, per_page=per_page))
+        else:
+            user_articles = (Articles.query
+                             .filter_by(author_id=user.id, status='опубликована')
+                             .order_by(Articles.date_created.desc())
+                             .paginate(page=page, per_page=per_page))
 
         total_articles = user_articles.total
 
