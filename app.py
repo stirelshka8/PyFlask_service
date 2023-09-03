@@ -187,14 +187,19 @@ def articles():
     page, per_page, offset = get_page_args(page_parameter='page',
                                            per_page_parameter='per_page')
 
-    # Фильтруем статьи по статусу "опубликовано"
+    # Получите список статей согласно вашему фильтру
     articles_list = (Articles.query
                      .filter(Articles.status == 'опубликована')
                      .order_by(Articles.date_created.desc())
                      .paginate(page=page, per_page=per_page, error_out=False))
 
+    # Создайте пустой словарь для хранения общего количества комментариев для каждой статьи
+    total_comments_dict = {}
+
+    # Получите общее количество комментариев для каждой статьи
     for article in articles_list.items:
-        article.body = markdown.markdown(article.body)
+        total_comments = Comment.query.filter_by(article_id=article.id).count()
+        total_comments_dict[article.id] = total_comments
 
     total_articles = articles_list.total
 
@@ -204,7 +209,9 @@ def articles():
     return render_template('articles.html',
                            articles_list=articles_list,
                            total_articles=total_articles,
+                           total_comments_dict=total_comments_dict,
                            pagination=pagination)
+
 
 
 @app.route('/article/<int:id>/')
@@ -267,7 +274,6 @@ def delete_article(id):
     if current_user != article.author:
         flash('Вы не имеете права удалять эту статью.', 'danger')
     else:
-        # Создаем запись об удаленной статье в таблице DeletedArticles
         deleted_article = DeletedArticles(user=current_user, article=article)
         db.session.add(deleted_article)
 
@@ -335,7 +341,7 @@ def login():
             if deleted_articles:
                 flash(
                     f'Внимание! У вас были удалены статьи.'
-                    f' Было удалено {len(deleted_articles)} статей со статусом "отклонена".',
+                    f' Было удалено статей со статусом "отклонена" - {len(deleted_articles)}.',
                     'warning')
 
                 # Отмечаем оповещения как отправленные
