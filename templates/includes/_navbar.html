@@ -19,7 +19,7 @@
         <ul class="nav navbar-nav navbar-right">
           {% if session.logged_in %}
             {% if session.is_admin %}
-              <li><a href="/moderate">Модерация</a></li>
+              <li><a href="/moderate">Модэратошная</a></li>
             {% endif %}
             <li><a href="/dashboard">[ {{ session.username }} ]</a></li>
             <li><a href="/logout">Выйти</a></li>
