@@ -83,6 +83,24 @@
       max-width: 100%;
       height: auto;
     }
+      .scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #3498db;
+    color: white;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none; /* Скрываем кнопку по умолчанию */
+  }
+
+  .scroll-to-top:hover {
+    background-color: #6500db;
+  }
   </style>
 {% endblock %}
 
@@ -94,7 +112,7 @@
         {{ body | safe }}
       </div>
     <hr>
-    <p class="author-info">Авторъ: <a href="{{ url_for('author_articles', username=author) }}">{{ author }}</a></p>
+    <p class="author-info">Авторъ: <a href="{{ url_for('user', username=author) }}">{{ author }}</a></p>
     <p class="author-info">Дата создания:  {{ date_created }}</p>
     <div class="article-actions">
         <form method="post" action="{{ url_for('like_article', id=article.id) }}" style="display: inline-block;">
@@ -165,5 +183,28 @@
             </form>
       </div>
   </div>
+  <div id="scroll-to-top" class="scroll-to-top">&#9650;</div>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const scrollToTopButton = document.getElementById('scroll-to-top');
+
+    // Показать или скрыть кнопку при прокрутке
+    window.addEventListener('scroll', () => {
+      if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+        scrollToTopButton.style.display = 'block';
+      } else {
+        scrollToTopButton.style.display = 'none';
+      }
+    });
+
+    // Плавно прокрутить вверх при клике на кнопку
+    scrollToTopButton.addEventListener('click', () => {
+      document.documentElement.style.scrollBehavior = 'smooth';
+      document.documentElement.scrollTop = 0;
+    });
+  });
+</script>
 {% endblock %}
+
+

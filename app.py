@@ -122,9 +122,9 @@ def moderate():
             return redirect(url_for('index'))
 
 
-@app.route('/author_articles/<string:username>')
+@app.route('/user/<string:username>')
 @login_required
-def author_articles(username):
+def user(username):
     # Получите пользователя по имени пользователя
     user = User.query.filter_by(username=username).first()
 
@@ -145,7 +145,7 @@ def author_articles(username):
         total_deleted_articles = DeletedArticles.query.filter_by(user=user).count()
 
 
-        return render_template('author_articles.html', user=user, author_articles=author_articles,
+        return render_template('user.html', user=user, author_articles=author_articles,
                                total_author_articles=total_author_articles, total_author_likes=total_author_likes,
                                registration_date=registration_date, total_rejected_articles=total_rejected_articles,
                                total_deleted_articles=total_deleted_articles)
