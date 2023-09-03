@@ -113,8 +113,8 @@
       </td>
       <td>
         <a href="{{ url_for('display_article', id=article.id) }}" class="btn-view-article">Перейти к статье</a>
-        <a href="{{ url_for('author_articles', username=article.author.username) }}" class="btn-view-article">
-                Посмотреть статьи автора
+        <a href="{{ url_for('user', username=article.author.username) }}" class="btn-view-article">
+                Информация об авторе
         </a>
         <!-- Здесь могут быть другие действия, например, удаление статьи -->
       </td>

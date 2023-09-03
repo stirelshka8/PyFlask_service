@@ -1,11 +1,9 @@
-from operator import or_
-
-from flask import Flask, render_template, flash, redirect, request, url_for, session, g
+from flask import Flask, render_template, flash, redirect, request, url_for, session, abort
 from flask_login import login_required, current_user, LoginManager, login_user
+from db_manager import db, Articles, User, Comment, DeletedArticles
+from forms import RegisterForm, ArticleForm, UpdateUserInfoForm, CommentForm
 from flask_principal import Principal, Permission, RoleNeed
 from flask_paginate import Pagination, get_page_args
-from db_manager import db, Articles, User, Comment, DeletedArticles
-from forms import RegisterForm, ArticleForm, UpdateUserInfoForm
 from passlib.hash import sha256_crypt
 from flask_ckeditor import CKEditor
 from flask_session import Session
@@ -53,7 +51,7 @@ app.config['SESSION_REDIS'] = redis.StrictRedis(
     password=os.environ.get('REDIS_PASS')
 )
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
-# Инициализация расширения сессий
+
 Session(app)
 
 with app.app_context():
@@ -74,6 +72,18 @@ def unauthorized():
 @app.route('/')
 def index():
     return render_template('home.html')
+
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Вы вышли из системы', 'success')
+    return redirect(url_for('index'))
 
 
 @app.route('/moderate', methods=['GET', 'POST'])
@@ -126,26 +136,25 @@ def moderate():
 @login_required
 def user(username):
     # Получите пользователя по имени пользователя
-    user = User.query.filter_by(username=username).first()
+    users = User.query.filter_by(username=username).first()
 
-    if user:
+    if users:
         # Получите информацию о статьях автора
-        author_articles = Articles.query.filter_by(author=user).all()
+        author_articles = Articles.query.filter_by(author=users).all()
         total_author_articles = len(author_articles)
         total_author_likes = sum(article.likes for article in author_articles)
 
-        if hasattr(user, 'registration_date'):
-            registration_date = user.registration_date.strftime('%Y-%m-%d')
+        if hasattr(users, 'registration_date'):
+            registration_date = users.registration_date.strftime('%Y-%m-%d')
         else:
             registration_date = "Дата регистрации не найдена"
 
-        total_rejected_articles = Articles.query.filter_by(author=user, status='отклонена').count()
+        total_rejected_articles = Articles.query.filter_by(author=users, status='отклонена').count()
 
         # Получите информацию о удаленных статьях из таблицы DeletedArticles
-        total_deleted_articles = DeletedArticles.query.filter_by(user=user).count()
+        total_deleted_articles = DeletedArticles.query.filter_by(user=users).count()
 
-
-        return render_template('user.html', user=user, author_articles=author_articles,
+        return render_template('user.html', user=users, author_articles=author_articles,
                                total_author_articles=total_author_articles, total_author_likes=total_author_likes,
                                registration_date=registration_date, total_rejected_articles=total_rejected_articles,
                                total_deleted_articles=total_deleted_articles)
@@ -171,11 +180,6 @@ def delete_rejected_articles():
     else:
         flash('У вас нет прав доступа к этой странице.', 'danger')
         return redirect(url_for('index'))
-
-
-@app.route('/about')
-def about():
-    return render_template('about.html')
 
 
 @app.route('/articles')
@@ -217,6 +221,7 @@ def display_article(id):
     comments = Comment.query.filter_by(article_id=id).order_by(Comment.date_created.desc()).paginate(page=page,
                                                                                                      per_page=per_page,
                                                                                                      error_out=False)
+    admins = session['is_admin']
 
     if article:
         return render_template('article.html',
@@ -224,7 +229,8 @@ def display_article(id):
                                body=body,
                                author=author,
                                date_created=date_created,
-                               current_user=current_user.username,
+                               current_user=current_user,
+                               admins=admins,
                                article=article,
                                comments=comments.items,
                                pagination=comments,
@@ -311,24 +317,25 @@ def login():
         username = request.form['username']
         password_candidate = request.form['password']
 
-        user = User.query.filter_by(username=username).first()
+        users = User.query.filter_by(username=username).first()
 
-        if user and sha256_crypt.verify(password_candidate, user.password):
+        if users and sha256_crypt.verify(password_candidate, users.password):
             session['logged_in'] = True
             session['username'] = username
 
-            if user.has_role('admin'):
+            if users.has_role('admin'):
                 session['is_admin'] = True
             else:
                 session['is_admin'] = False
 
-            login_user(user)
+            login_user(users)
 
-            deleted_articles = DeletedArticles.query.filter_by(user=user, notified=False).all()
+            deleted_articles = DeletedArticles.query.filter_by(user=users, notified=False).all()
 
             if deleted_articles:
                 flash(
-                    f'Внимание! У вас были удалены статьи. Было удалено {len(deleted_articles)} статей со статусом "отклонена".',
+                    f'Внимание! У вас были удалены статьи.'
+                    f' Было удалено {len(deleted_articles)} статей со статусом "отклонена".',
                     'warning')
 
                 # Отмечаем оповещения как отправленные
@@ -361,13 +368,6 @@ def update_user_info():
     return redirect(url_for('dashboard'))
 
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('Вы вышли из системы', 'success')
-    return redirect(url_for('index'))
-
-
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
@@ -391,7 +391,7 @@ def dashboard():
             flash('Статья успешно добавлена и ожидает модерации.', 'success')
             return redirect(url_for('dashboard'))
 
-        user = User.query.filter_by(username=session['username']).first()
+        users = User.query.filter_by(username=session['username']).first()
 
         user_articles = (Articles.query
                          .filter_by(author=current_user)
@@ -402,28 +402,49 @@ def dashboard():
 
         pagination = Pagination(page=page, per_page=per_page, total=total_articles, css_framework='bootstrap4')
 
-        return render_template('dashboard.html', user=user, user_articles=user_articles,
+        return render_template('dashboard.html', user=users, user_articles=user_articles,
                                total_articles=total_articles, pagination=pagination, form=form)
     else:
         flash('Вы не аутентифицированны!', 'danger')
         return redirect(url_for('login'))
 
 
-@app.route('/add_comment/<int:id>/', methods=['POST'])
+@app.route('/add_comment/<int:id>', methods=['GET', 'POST'])
 @login_required
 def add_comment(id):
-    article = Articles.query.get_or_404(id)
-    body = request.form.get('body')
+    form = CommentForm()
 
-    if body:
-        new_comment = Comment(body=body, author=current_user, article_id=article.id)
-        db.session.add(new_comment)
+    if form.validate_on_submit():
+        body = form.body.data
+        article_id = form.article_id.data  # Получите идентификатор статьи из формы
+
+        comment = Comment(body=body, author=current_user, article_id=article_id)  # Передайте идентификатор статьи
+        db.session.add(comment)
         db.session.commit()
-        flash('Комментарий добавлен.', 'success')
-    else:
-        flash('Пустой комментарий нельзя добавить.', 'danger')
 
-    return redirect(url_for('display_article', id=id))
+        flash('Комментарий добавлен', 'success')
+        return redirect(url_for('display_article', id=id))
+
+    return render_template('add_comment.html', form=form)
+
+
+@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    article = Articles.query.get_or_404(comment.article_id)
+    author = article.author
+
+    print(session['is_admin'])
+
+    if current_user.id == comment.author_id and current_user.id == author.id and not session['is_admin']:
+        flash('У Вас нет доступа для удаления данного комментария!', 'danger')
+    else:
+        db.session.delete(comment)
+        db.session.commit()
+        flash('Комментарий удален', 'success')
+
+    return redirect(url_for('display_article', id=comment.article_id))
 
 
 @app.route('/like_article/<int:id>/', methods=['POST'])

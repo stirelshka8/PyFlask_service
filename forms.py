@@ -1,4 +1,4 @@
-from wtforms import Form, StringField, PasswordField, validators, TextAreaField
+from wtforms import Form, StringField, PasswordField, validators, TextAreaField, HiddenField, SubmitField
 from wtforms.validators import DataRequired
 from flask_wtf import FlaskForm
 
@@ -28,3 +28,9 @@ class UpdateUserInfoForm(Form):
 class ArticleForm(FlaskForm):
     title = StringField('title', validators=[DataRequired()])
     body = TextAreaField('body', validators=[DataRequired()])
+
+
+class CommentForm(FlaskForm):
+    body = TextAreaField('Комментарий', validators=[DataRequired()])
+    article_id = HiddenField()  # Поле для хранения идентификатора статьи
+    submit = SubmitField('Добавить комментарий')

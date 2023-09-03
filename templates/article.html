@@ -3,10 +3,22 @@
 {% block style%}
 <style>
     .comment {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 15px;
     padding: 10px;
     border: 1px solid #ccc;
     background-color: #f9f9f9;
+    }
+
+    .comment-content {
+    flex-grow: 1;
+    }
+
+    .comment-actions {
+    flex-shrink: 0;
+    margin-left: 10px;
     }
 
     .comment p {
@@ -19,18 +31,17 @@
         color: #777;
     }
      .custom-btn {
-      background-color: #3498db;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 15px;
-      color: #ffffff;
-      font-size: 0.9rem;
-      text-decoration: none;
-      transition: background-color 0.2s;
-      margin-right: 5px;
+    background-color: #e74c3c;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background-color 0.2s;
     }
     .custom-btn:hover {
-      background-color: #6500db;
+    background-color: #6500db;
     }
 
     .edit-btn {
@@ -141,14 +152,24 @@
             </form>
         {% endif %}
     </div>
-      <div class="comments">
+        <div class="comments">
             <div class="comments-section">
                 <h3>Комментарии:</h3>
                     {% for comment in comments %}
-                        <div class="comment">
+                    <div class="comment">
+                        <div class="comment-content">
                             <p>{{ comment.body }}</p>
                             <p class="meta">Автор: {{ comment.author.username }} | {{ comment.date_created.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                         </div>
+                        <div class="comment-actions">
+                            {% if current_user.username == comment.author.username or current_user.username == author or admins == True %}
+                            <form action="{{ url_for('delete_comment', comment_id=comment.id) }}" method="post">
+                                {{ form.hidden_tag() }}
+                                <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить этот комментарий?')">Удалить</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% endfor %}
 
                     {% if pagination.pages > 1 %}
@@ -173,14 +194,15 @@
                         </div>
                     {% endif %}
             </div>
-            <form method="post" action="{{ url_for('add_comment', id=article.id) }}">
-                {{ form.hidden_tag() }}
-                <div class="form-group">
-                    <label for="{{ form.body.id }}">Введите ваш комментарий:</label>
-                    {{ form.body(class="form-control", rows=5) }}
-                </div>
-                <button type="submit" class="btn btn-primary">Добавить комментарий</button>
-            </form>
+                <form method="post" action="{{ url_for('add_comment', id=article.id) }}">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="article_id" value="{{ article.id }}">  <!-- Добавьте это поле -->
+                    <div class="form-group">
+                        <label for="{{ form.body.id }}">Введите ваш комментарий:</label>
+                        {{ form.body(class="form-control", rows=5) }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Добавить комментарий</button>
+                </form>
       </div>
   </div>
   <div id="scroll-to-top" class="scroll-to-top">&#9650;</div>
