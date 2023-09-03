@@ -1,7 +1,7 @@
-from flask import Flask, render_template, flash, redirect, request, url_for, session, abort
+from flask import Flask, render_template, flash, redirect, request, url_for, session
 from flask_login import login_required, current_user, LoginManager, login_user
-from db_manager import db, Articles, User, Comment, DeletedArticles
 from forms import RegisterForm, ArticleForm, UpdateUserInfoForm, CommentForm
+from db_manager import db, Articles, User, Comment, DeletedArticles
 from flask_principal import Principal, Permission, RoleNeed
 from flask_paginate import Pagination, get_page_args
 from passlib.hash import sha256_crypt
@@ -56,10 +56,6 @@ app.config['SESSION_REDIS'] = redis.StrictRedis(
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
 
 Session(app)
-
-
-# with app.app_context():
-#     db.create_all()
 
 
 @login_manager.user_loader
