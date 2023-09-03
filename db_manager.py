@@ -45,6 +45,11 @@ class Articles(db.Model):
     likes = db.Column(db.Integer, default=0)
     status = db.Column(db.String(50), default='ожидает модерации')
     likes_users = db.relationship('User', secondary='article_likes', back_populates='liked_articles')
+    comments = db.relationship('Comment', backref='article', lazy='dynamic')
+
+    @property
+    def comments_count(self):
+        return self.comments.count()
 
 
 # Intermediate table to store article likes

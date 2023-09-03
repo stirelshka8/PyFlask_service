@@ -85,6 +85,44 @@
 {% endblock %}
 
 {% block body %}
+    <h1>Лидеры</h1>
+    <h3>По количеству отметок "Мне нравится"</h3>
+    {% for top_like_article in top_likes_articles %}
+    <div class="article-card">
+        <div class="card-body">
+            <div style="float: right; text-align: center; margin-left: 20px;">
+                <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ top_like_article.likes }}</p>
+                <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(top_like_article.id, 0) }}</p>
+            </div>
+
+            <h2 class="article-title">{{ top_like_article.title }}</h2>
+            <p class="article-info">Авторъ: {{ top_like_article.author.username }} | Дата создания: {{ top_like_article.date_created }}</p>
+
+            <form action="{{ url_for('display_article', id=top_like_article.id) }}" style="display: inline-block;">
+                <button type="submit" class="custom-btn">Читать далее</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+    <h3>По количеству комментариев</h3>
+    <div class="article-card">
+        <div class="card-body">
+            <div style="float: right; text-align: center; margin-left: 20px;">
+                <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ top_comments_articles[0][0].likes }}</p>
+                <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(top_comments_articles[0][0].id, 0) }}</p>
+            </div>
+
+            <h2 class="article-title">{{ top_comments_articles[0][0].title }}</h2>
+            <p class="article-info">Авторъ: {{ top_comments_articles[0][0].author.username }} | Дата создания: {{ top_comments_articles[0][0].date_created }}</p>
+
+            <form action="{{ url_for('display_article', id=top_comments_articles[0][0].id) }}" style="display: inline-block;">
+                <button type="submit" class="custom-btn">Читать далее</button>
+            </form>
+        </div>
+    </div>
+
+
     <h1>Статьи [{{ total_articles }}]</h1>
     {% for article in articles_list.items %}
         <div class="article-card">

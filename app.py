@@ -6,7 +6,9 @@ from flask_principal import Principal, Permission, RoleNeed
 from flask_paginate import Pagination, get_page_args
 from passlib.hash import sha256_crypt
 from flask_ckeditor import CKEditor
+from flask_migrate import Migrate
 from flask_session import Session
+from sqlalchemy import desc, func
 from dotenv import load_dotenv
 import datetime
 import markdown
@@ -25,6 +27,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 ckeditor = CKEditor(app)
 principal = Principal(app)
+migrate = Migrate(app, db)
 
 app.secret_key = os.environ.get('SECRET')
 
@@ -54,8 +57,9 @@ app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
 
 Session(app)
 
-with app.app_context():
-    db.create_all()
+
+# with app.app_context():
+#     db.create_all()
 
 
 @login_manager.user_loader
@@ -193,6 +197,16 @@ def articles():
                      .order_by(Articles.date_created.desc())
                      .paginate(page=page, per_page=per_page, error_out=False))
 
+    top_likes_articles = Articles.query.order_by(desc(Articles.likes)).limit(1).all()
+    top_comments_articles = (
+        db.session.query(Articles, func.count(Comment.id).label('comment_count'))
+        .outerjoin(Comment)
+        .group_by(Articles.id)
+        .order_by(desc('comment_count'))
+        .limit(1)
+        .all()
+    )
+
     # Создайте пустой словарь для хранения общего количества комментариев для каждой статьи
     total_comments_dict = {}
 
@@ -210,8 +224,9 @@ def articles():
                            articles_list=articles_list,
                            total_articles=total_articles,
                            total_comments_dict=total_comments_dict,
-                           pagination=pagination)
-
+                           pagination=pagination,
+                           top_likes_articles=top_likes_articles,
+                           top_comments_articles=top_comments_articles)
 
 
 @app.route('/article/<int:id>/')
