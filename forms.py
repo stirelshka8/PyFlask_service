@@ -32,5 +32,5 @@ class ArticleForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     body = TextAreaField('Комментарий', validators=[DataRequired()])
-    article_id = HiddenField()  # Поле для хранения идентификатора статьи
+    article_id = HiddenField()
     submit = SubmitField('Добавить комментарий')

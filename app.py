@@ -19,6 +19,8 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
+else:
+    exit('[STOP SYSTEM STARTUP] >> Не обнаружен файл переменных окружения".env"')
 
 admin_permission = Permission(RoleNeed("admin"))
 
@@ -38,7 +40,7 @@ elif (os.environ.get('DB_TYPE')).lower() == 'postgresql':
 elif (os.environ.get('DB_TYPE')).lower() == 'mysql':
     pass
 else:
-    exit('Неверно указаны настройки базы данных!')
+    exit('[DB ERROR] >> Неверно указаны настройки базы данных!')
 
 db.init_app(app)
 
@@ -72,6 +74,11 @@ def unauthorized():
 @app.route('/')
 def index():
     return render_template('home.html')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return url_for('static', filename='image/favicon.ico')
 
 
 @app.route('/about')
@@ -135,11 +142,9 @@ def moderate():
 @app.route('/user/<string:username>')
 @login_required
 def user(username):
-    # Получите пользователя по имени пользователя
     users = User.query.filter_by(username=username).first()
 
     if users:
-        # Получите информацию о статьях автора
         author_articles = Articles.query.filter_by(author=users).all()
         total_author_articles = len(author_articles)
         total_author_likes = sum(article.likes for article in author_articles)
@@ -151,7 +156,6 @@ def user(username):
 
         total_rejected_articles = Articles.query.filter_by(author=users, status='отклонена').count()
 
-        # Получите информацию о удаленных статьях из таблицы DeletedArticles
         total_deleted_articles = DeletedArticles.query.filter_by(user=users).count()
 
         return render_template('user.html', user=users, author_articles=author_articles,
@@ -187,7 +191,6 @@ def articles():
     page, per_page, offset = get_page_args(page_parameter='page',
                                            per_page_parameter='per_page')
 
-    # Получите список статей согласно вашему фильтру
     articles_list = (Articles.query
                      .filter(Articles.status == 'опубликована')
                      .order_by(Articles.date_created.desc())
@@ -203,10 +206,8 @@ def articles():
         .all()
     )
 
-    # Создайте пустой словарь для хранения общего количества комментариев для каждой статьи
     total_comments_dict = {}
 
-    # Получите общее количество комментариев для каждой статьи
     for article in articles_list.items:
         total_comments = Comment.query.filter_by(article_id=article.id).count()
         total_comments_dict[article.id] = total_comments
@@ -355,7 +356,6 @@ def login():
                     f' Было удалено статей со статусом "отклонена" - {len(deleted_articles)}.',
                     'warning')
 
-                # Отмечаем оповещения как отправленные
                 for article in deleted_articles:
                     article.notified = True
                 db.session.commit()
@@ -433,7 +433,7 @@ def add_comment(id):
 
     if form.validate_on_submit():
         body = form.body.data
-        article_id = form.article_id.data  # Получите идентификатор статьи из формы
+        article_id = form.article_id.data
 
         comment = Comment(body=body, author=current_user, article_id=article_id)  # Передайте идентификатор статьи
         db.session.add(comment)

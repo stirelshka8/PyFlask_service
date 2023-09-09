@@ -20,7 +20,7 @@ class User(db.Model, UserMixin):
         return True
 
     def has_role(self, role_name):
-        related_roles = self.roles  # Получаем список связанных ролей
+        related_roles = self.roles
         return any(role.name == role_name for role in related_roles)
 
 
@@ -52,7 +52,6 @@ class Articles(db.Model):
         return self.comments.count()
 
 
-# Intermediate table to store article likes
 class ArticleLikes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
@@ -66,7 +65,7 @@ class DeletedArticles(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', foreign_keys=[user_id])
     deleted_at = db.Column(db.DateTime, default=datetime.utcnow)
-    notified = db.Column(db.Boolean, default=False)  # Поле для отслеживания оповещения пользователя
+    notified = db.Column(db.Boolean, default=False)
 
 
 User.liked_articles = db.relationship('Articles', secondary='article_likes', back_populates='likes_users')
