@@ -1,7 +1,6 @@
 {% extends 'layout.html' %}
 
 {% block style %}
-<style>
     /* Shared styles */
     .custom-btn {
         background-color: #3498db;
@@ -101,73 +100,88 @@
     .leader-article-card:hover {
     background-color: #cadaba;
     }
-</style>
+    .first-titles {
+    border-style: groove;
+	border-color: #0077ff;
+    border-radius: 15px;
+	text-align: center;
+    }
+    .second-titles {
+    border-style: groove;
+	border-color: #008cf0;
+    border-radius: 15px;
+	text-align: center;
+    }
 {% endblock %}
 
 {% block body %}
-<h1>Лидеры</h1>
-<h3>По количеству отметок "Мне нравится"</h3>
-{% for top_like_article in top_likes_articles %}
-<div class="article-card leader-article-card"> <!-- Add the "leader-article-card" class -->
-    <div class="card-body">
-        <div style="float: right; text-align: center; margin-left: 20px;">
-            <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ top_like_article.likes }}</p>
-            <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(top_like_article.id, 0) }}</p>
+    {% if total_articles == 0 %}
+        <h1>Статьи отсутствуют</h1>
+    {% else %}
+        <h1 class="first-titles">Лидеры</h1>
+        <h3 class="second-titles">По количеству отметок "Мне нравится"</h3>
+        {% for top_like_article in top_likes_articles %}
+        <div class="article-card leader-article-card"> <!-- Add the "leader-article-card" class -->
+            <div class="card-body">
+                <div style="float: right; text-align: center; margin-left: 20px;">
+                    <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ top_like_article.likes }}</p>
+                    <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(top_like_article.id, 0) }}</p>
+                </div>
+                <h2 class="article-title">{{ top_like_article.title }}</h2>
+                <p class="article-info">Авторъ: {{ top_like_article.author.username }} | Дата публикации: {{ top_like_article.date_created }}</p>
+                <form action="{{ url_for('display_article', id=top_like_article.id) }}" style="display: inline-block;">
+                    <button type="submit" class="custom-btn">Читать далее</button>
+                </form>
+            </div>
         </div>
-        <h2 class="article-title">{{ top_like_article.title }}</h2>
-        <p class="article-info">Авторъ: {{ top_like_article.author.username }} | Дата публикации: {{ top_like_article.date_created }}</p>
-        <form action="{{ url_for('display_article', id=top_like_article.id) }}" style="display: inline-block;">
-            <button type="submit" class="custom-btn">Читать далее</button>
-        </form>
-    </div>
-</div>
-{% endfor %}
+        {% endfor %}
 
-<h3>По количеству комментариев</h3>
-<div class="article-card leader-article-card">
-    <div class="card-body">
-        <div style="float: right; text-align: center; margin-left: 20px;">
-            <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ top_comments_articles[0][0].likes }}</p>
-            <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(top_comments_articles[0][0].id, 0) }}</p>
+        <h3 class="second-titles">По количеству комментариев</h3>
+        <div class="article-card leader-article-card">
+            <div class="card-body">
+                <div style="float: right; text-align: center; margin-left: 20px;">
+                    <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ top_comments_articles[0][0].likes }}</p>
+                    <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(top_comments_articles[0][0].id, 0) }}</p>
+                </div>
+                <h2 class="article-title">{{ top_comments_articles[0][0].title }}</h2>
+                <p class="article-info">Авторъ: {{ top_comments_articles[0][0].author.username }} | Дата публикации: {{ top_comments_articles[0][0].date_created }}</p>
+                <form action="{{ url_for('display_article', id=top_comments_articles[0][0].id) }}" style="display: inline-block;">
+                    <button type="submit" class="custom-btn">Читать далее</button>
+                </form>
+            </div>
         </div>
-        <h2 class="article-title">{{ top_comments_articles[0][0].title }}</h2>
-        <p class="article-info">Авторъ: {{ top_comments_articles[0][0].author.username }} | Дата публикации: {{ top_comments_articles[0][0].date_created }}</p>
-        <form action="{{ url_for('display_article', id=top_comments_articles[0][0].id) }}" style="display: inline-block;">
-            <button type="submit" class="custom-btn">Читать далее</button>
-        </form>
-    </div>
-</div>
 
-<h1>Статьи [{{ total_articles }}]</h1>
-{% for article in articles_list.items %}
-<div class="article-card">
-    <div class="card-body">
-        <div style="float: right; text-align: center; margin-left: 20px;">
-            <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ article.likes }}</p>
-            <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(article.id, 0) }}</p>
+        <h1 class="first-titles">Статьи [{{ total_articles }}]</h1>
+        {% for article in articles_list.items %}
+        <div class="article-card">
+            <div class="card-body">
+                <div style="float: right; text-align: center; margin-left: 20px;">
+                    <p class="total-likes" style="margin-bottom: 0;">&#128151 {{ article.likes }}</p>
+                    <p class="total-comments" style="margin-bottom: 0;">&#128172 {{ total_comments_dict.get(article.id, 0) }}</p>
+                </div>
+                <h2 class="article-title">{{ article.title }}</h2>
+                <p class="article-info">Авторъ: {{ article.author.username }} | Дата публикации: {{ article.date_created }}</p>
+                <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+                    <button type="submit" class="custom-btn">Читать далее</button>
+                </form>
+            </div>
         </div>
-        <h2 class="article-title">{{ article.title }}</h2>
-        <p class="article-info">Авторъ: {{ article.author.username }} | Дата публикации: {{ article.date_created }}</p>
-        <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
-            <button type="submit" class="custom-btn">Читать далее</button>
-        </form>
-    </div>
-</div>
-{% endfor %}
+        {% endfor %}
 
-<nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-        {% if pagination.pages %}
-            {% for page_num in pagination.pages %}
-                {% if page_num %}
-                    <li class="page-item{% if pagination.page == page_num %} active{% endif %}">
-                        <a class="page-link" href="{{ url_for('articles', page=page_num) }}">{{ page_num }}</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link">...</span></li>
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if pagination.pages %}
+                    {% for page_num in pagination.pages %}
+                        {% if page_num %}
+                            <li class="page-item{% if pagination.page == page_num %} active{% endif %}">
+                                <a class="page-link" href="{{ url_for('articles', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
-            {% endfor %}
-        {% endif %}
-    </ul>
-</nav>
+            </ul>
+        </nav>
+    {% endif %}
 {% endblock %}

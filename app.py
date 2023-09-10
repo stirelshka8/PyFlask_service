@@ -45,19 +45,19 @@ else:
 db.init_app(app)
 
 # Настройки для подключения к Redis
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_KEY_PREFIX'] = 'flpy_'
-app.config['SESSION_REDIS'] = redis.StrictRedis(
-    host=os.environ.get('REDIS_HOST'),
-    port=os.environ.get('REDIS_PORT'),
-    db=os.environ.get('REDIS_DB'),
-    password=os.environ.get('REDIS_PASS')
-)
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
-
-Session(app)
+# app.config['SESSION_TYPE'] = 'redis'
+# app.config['SESSION_PERMANENT'] = True
+# app.config['SESSION_USE_SIGNER'] = True
+# app.config['SESSION_KEY_PREFIX'] = 'flpy_'
+# app.config['SESSION_REDIS'] = redis.StrictRedis(
+#     host=os.environ.get('REDIS_HOST'),
+#     port=os.environ.get('REDIS_PORT'),
+#     db=os.environ.get('REDIS_DB'),
+#     password=os.environ.get('REDIS_PASS')
+# )
+# app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
+#
+# Session(app)
 
 
 @login_manager.user_loader

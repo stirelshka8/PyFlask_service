@@ -1,9 +1,6 @@
 {% extends 'layout.html' %}
 
 {% block style %}
-  <style>
-    /* Ваши стили здесь */
-  </style>
 {% endblock %}
 
 {% block body %}
@@ -20,6 +17,11 @@
     <button type="submit" class="btn btn-primary">Сохранить изменения</button>
   </form>
 
+
+{% endblock %}
+
+
+{% block scp %}
   <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
   <script>
     ClassicEditor

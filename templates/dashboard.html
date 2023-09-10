@@ -1,7 +1,5 @@
 {% extends 'layout.html' %}
 {% block style %}
-  <style>
-    /* Ваши стили здесь */
     .summary-button {
       background-color: #3498db;
       padding: 5px;
@@ -111,7 +109,6 @@
     padding: 10px;
     border-radius: 5px;
     }
-  </style>
 {% endblock %}
 
 {% block body %}
@@ -225,6 +222,10 @@
   </details>
 </section>
 
+
+{% endblock %}
+
+{% block scp %}
 <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
 <script>
   ClassicEditor
@@ -272,7 +273,6 @@
       userInfoSummary.textContent = 'Развернуть';
     }
   });
-
-
 </script>
 {% endblock %}
+

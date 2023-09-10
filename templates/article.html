@@ -1,7 +1,6 @@
 {% extends 'layout.html' %}
 
 {% block style%}
-<style>
     .comment {
     display: flex;
     justify-content: space-between;
@@ -112,7 +111,6 @@
   .scroll-to-top:hover {
     background-color: #6500db;
   }
-  </style>
 {% endblock %}
 
 {% block body %}
@@ -207,6 +205,9 @@
   </div>
   <div id="scroll-to-top" class="scroll-to-top">&#9650;</div>
 
+{% endblock %}
+
+{% block scp %}
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const scrollToTopButton = document.getElementById('scroll-to-top');
@@ -228,5 +229,6 @@
   });
 </script>
 {% endblock %}
+
 
 
