@@ -186,13 +186,13 @@
                 </form>
               {% else %}
               <p class="article-excerpt">{{ article.excerpt }}</p>
-              <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+              <form action="{{ url_for('article.display_article', id=article.id) }}" style="display: inline-block;">
                 <button type="submit" class="custom-btn">Открыть</button>
               </form>
-              <form action="{{ url_for('edit_article', id=article.id) }}" style="display: inline-block;">
+              <form action="{{ url_for('article.edit_article', id=article.id) }}" style="display: inline-block;">
                 <button type="submit" class="custom-btn edit-btn">Редактировать</button>
               </form>
-              <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
+              <form action="{{ url_for('article.delete_article', id=article.id) }}" method="post" style="display: inline-block;">
                 <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
               </form>
             {% endif %}

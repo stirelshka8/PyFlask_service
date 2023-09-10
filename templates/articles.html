@@ -123,7 +123,7 @@
                 </div>
                 <h2 class="article-title">{{ top_like_article.title }}</h2>
                 <p class="article-info">Авторъ: {{ top_like_article.author.username }} | Дата публикации: {{ top_like_article.date_created }}</p>
-                <form action="{{ url_for('display_article', id=top_like_article.id) }}" style="display: inline-block;">
+                <form action="{{ url_for('article.display_article', id=top_like_article.id) }}" style="display: inline-block;">
                     <button type="submit" class="custom-btn">Читать далее</button>
                 </form>
             </div>
@@ -139,7 +139,7 @@
                 </div>
                 <h2 class="article-title">{{ top_comments_articles[0][0].title }}</h2>
                 <p class="article-info">Авторъ: {{ top_comments_articles[0][0].author.username }} | Дата публикации: {{ top_comments_articles[0][0].date_created }}</p>
-                <form action="{{ url_for('display_article', id=top_comments_articles[0][0].id) }}" style="display: inline-block;">
+                <form action="{{ url_for('article.display_article', id=top_comments_articles[0][0].id) }}" style="display: inline-block;">
                     <button type="submit" class="custom-btn">Читать далее</button>
                 </form>
             </div>
@@ -155,7 +155,7 @@
                 </div>
                 <h2 class="article-title">{{ article.title }}</h2>
                 <p class="article-info">Авторъ: {{ article.author.username }} | Дата публикации: {{ article.date_created }}</p>
-                <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+                <form action="{{ url_for('article.display_article', id=article.id) }}" style="display: inline-block;">
                     <button type="submit" class="custom-btn">Читать далее</button>
                 </form>
             </div>
@@ -168,7 +168,7 @@
                     {% for page_num in pagination.pages %}
                         {% if page_num %}
                             <li class="page-item{% if pagination.page == page_num %} active{% endif %}">
-                                <a class="page-link" href="{{ url_for('articles', page=page_num) }}">{{ page_num }}</a>
+                                <a class="page-link" href="{{ url_for('article.articles', page=page_num) }}">{{ page_num }}</a>
                             </li>
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">...</span></li>
