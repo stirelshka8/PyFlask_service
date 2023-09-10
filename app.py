@@ -20,7 +20,8 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 else:
-    exit('[STOP SYSTEM STARTUP] >> Не обнаружен файл переменных окружения".env"')
+    exit('[STOP SYSTEM STARTUP] >> Не обнаружен файл переменных окружения ".env". \n'
+         'Файл должен располагаться на одном уровне с "app.py".')
 
 admin_permission = Permission(RoleNeed("admin"))
 
@@ -44,7 +45,7 @@ else:
 
 db.init_app(app)
 
-if (os.environ.get('REDIS_SESSION')).lower() == 'true':
+if (os.environ.get('SESSION_TYPE')).lower() == 'redis':
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_PERMANENT'] = True
     app.config['SESSION_USE_SIGNER'] = True
@@ -56,7 +57,10 @@ if (os.environ.get('REDIS_SESSION')).lower() == 'true':
         password=os.environ.get('REDIS_PASS')
     )
     app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
-
+elif (os.environ.get('SESSION_TYPE')).lower() == 'file':
+    app.config['SESSION_TYPE'] = 'filesystem'
+else:
+    exit('[SESSION ERROR] >> Неверно указаны настройки сессии!')
 
 Session(app)
 
