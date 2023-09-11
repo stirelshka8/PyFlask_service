@@ -110,10 +110,10 @@
       </td>
       <td>
         <a href="{{ url_for('article.display_article', id=article.id) }}" class="btn-view-article">Перейти к статье</a>
-        <a href="{{ url_for('user', username=article.author.username) }}" class="btn-view-article">
+        <a href="{{ url_for('user.user', username=article.author.username) }}" class="btn-view-article">
                 Информация об авторе
         </a>
-        <!-- Здесь могут быть другие действия, например, удаление статьи -->
+
       </td>
     </tr>
     {% endfor %}

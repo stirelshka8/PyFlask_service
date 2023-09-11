@@ -42,7 +42,7 @@ def edit_article(id):
         article.body = request.form['body']
         db.session.commit()
         flash('Статья успешно отредактирована.', 'success')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('user.dashboard'))
 
     return render_template('edit_article.html', form=form, article=article)
 

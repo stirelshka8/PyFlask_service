@@ -3,3 +3,4 @@ __pycache__
 /Procfile
 /instance/myflaskblog.db
 /.env
+/flask_session/

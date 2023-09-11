@@ -4,11 +4,13 @@ from forms import RegisterForm, ArticleForm, UpdateUserInfoForm
 from db_manager import db, Articles, User, DeletedArticles
 from flask_paginate import Pagination
 from passlib.hash import sha256_crypt
+import os
 
 user_blueprint = Blueprint('user', __name__)
 
 
 @user_blueprint.route('/logout')
+@login_required
 def logout():
     session.clear()
     flash('Вы вышли из системы', 'success')
@@ -46,34 +48,37 @@ def user(username):
 
 @user_blueprint.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegisterForm(request.form)
-    if request.method == 'POST' and form.validate():
-        name = form.name.data
-        email = form.email.data
-        username = form.username.data
-        password = sha256_crypt.hash(str(form.password.data))
+    if (os.environ.get('REGISTER_OFF')).lower() == 'false':
+        form = RegisterForm(request.form)
+        if request.method == 'POST' and form.validate():
+            name = form.name.data
+            email = form.email.data
+            username = form.username.data
+            password = sha256_crypt.hash(str(form.password.data))
 
-        existing_user = User.query.filter_by(username=username).first()
-        existing_email = User.query.filter_by(email=email).first()
+            existing_user = User.query.filter_by(username=username).first()
+            existing_email = User.query.filter_by(email=email).first()
 
-        if existing_user:
-            flash('Пользователь с таким именем уже существует.', 'danger')
-            return redirect(url_for('register'))
+            if existing_user:
+                flash('Пользователь с таким именем уже существует.', 'danger')
+                return redirect(url_for('user.register'))
 
-        if existing_email:
-            flash('Пользователь с таким email уже существует.', 'danger')
-            return redirect(url_for('register'))
+            if existing_email:
+                flash('Пользователь с таким email уже существует.', 'danger')
+                return redirect(url_for('register'))
 
-        new_user = User(name=name, email=email, username=username, password=password)
+            new_user = User(name=name, email=email, username=username, password=password)
 
-        db.session.add(new_user)
-        db.session.commit()
+            db.session.add(new_user)
+            db.session.commit()
 
-        flash('Теперь вы зарегистрированы и можете войти. Добро пожаловать в BlogIt!!', 'success')
+            flash('Теперь вы зарегистрированы и можете войти. Добро пожаловать в BlogIt!!', 'success')
 
-        return redirect(url_for('index'))
+            return redirect(url_for('index'))
 
-    return render_template('register.html', form=form)
+        return render_template('register.html', form=form)
+    else:
+        return render_template('register_off.html', img=f'/static/image/stop.png')
 
 
 @user_blueprint.route('/login', methods=['GET', 'POST'])
@@ -130,7 +135,7 @@ def update_user_info():
         flash('Информация о пользователе успешно обновлена.', 'success')
     else:
         flash('Ошибка при обновлении информации о пользователе.', 'danger')
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('user.dashboard'))
 
 
 @user_blueprint.route('/dashboard', methods=['GET', 'POST'])
@@ -139,36 +144,31 @@ def dashboard():
     per_page = 12
     page = request.args.get('page', 1, type=int)
 
-    if 'logged_in' in session:
+    form = ArticleForm()
 
-        form = ArticleForm()
+    if request.method == 'POST' and form.validate():
+        title = form.title.data
+        body = form.body.data
+        author = current_user
+        status = 'ожидает модерации'
 
-        if request.method == 'POST' and form.validate():
-            title = form.title.data
-            body = form.body.data
-            author = current_user
-            status = 'ожидает модерации'
+        new_article = Articles(title=title, body=body, author=author, status=status)
+        db.session.add(new_article)
+        db.session.commit()
 
-            new_article = Articles(title=title, body=body, author=author, status=status)
-            db.session.add(new_article)
-            db.session.commit()
+        flash('Статья успешно добавлена и ожидает модерации.', 'success')
+        return redirect(url_for('user.dashboard'))
 
-            flash('Статья успешно добавлена и ожидает модерации.', 'success')
-            return redirect(url_for('dashboard'))
+    users = User.query.filter_by(username=session['username']).first()
 
-        users = User.query.filter_by(username=session['username']).first()
+    user_articles = (Articles.query
+                     .filter_by(author=current_user)
+                     .order_by(Articles.date_created.desc())
+                     .paginate(page=page, per_page=per_page))
 
-        user_articles = (Articles.query
-                         .filter_by(author=current_user)
-                         .order_by(Articles.date_created.desc())
-                         .paginate(page=page, per_page=per_page))
+    total_articles = user_articles.total
 
-        total_articles = user_articles.total
+    pagination = Pagination(page=page, per_page=per_page, total=total_articles, css_framework='bootstrap4')
 
-        pagination = Pagination(page=page, per_page=per_page, total=total_articles, css_framework='bootstrap4')
-
-        return render_template('dashboard.html', user=users, user_articles=user_articles,
-                               total_articles=total_articles, pagination=pagination, form=form)
-    else:
-        flash('Вы не аутентифицированны!', 'danger')
-        return redirect(url_for('login'))
+    return render_template('dashboard.html', user=users, user_articles=user_articles,
+                           total_articles=total_articles, pagination=pagination, form=form)

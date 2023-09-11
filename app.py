@@ -24,6 +24,7 @@ else:
 admin_permission = Permission(RoleNeed("admin"))
 
 app = Flask(__name__)
+login_manager = LoginManager()
 
 # Registering routes ----------------------
 app.register_blueprint(article_blueprint)
@@ -31,7 +32,6 @@ app.register_blueprint(admin_blueprint)
 app.register_blueprint(user_blueprint)
 # -----------------------------------------
 
-login_manager = LoginManager()
 login_manager.init_app(app)
 ckeditor = CKEditor(app)
 principal = Principal(app)
@@ -93,7 +93,7 @@ def load_user(user_id):
 @login_manager.unauthorized_handler
 def unauthorized():
     flash('Доступ разрешен только авторизованным!', 'danger')
-    return render_template('home.html')
+    return render_template('login.html')
 
 
 if __name__ == '__main__':
