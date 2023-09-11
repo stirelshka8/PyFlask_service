@@ -48,6 +48,7 @@ def user(username):
 
 @user_blueprint.route('/register', methods=['GET', 'POST'])
 def register():
+    # TODO: Создать в БД таблицу где будет указываться параметр аналогичный тому который в переменной окружения. И через OR сделать проверку и его
     if (os.environ.get('REGISTER_OFF')).lower() == 'false':
         form = RegisterForm(request.form)
         if request.method == 'POST' and form.validate():
@@ -83,6 +84,7 @@ def register():
 
 @user_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
+    # TODO: Добавить функцию отключения входа для пользователей, кроме админов
     if request.method == 'POST':
         username = request.form['username']
         password_candidate = request.form['password']
