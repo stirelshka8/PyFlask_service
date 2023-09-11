@@ -40,7 +40,7 @@
 {% block body %}
   <div class="login-form">
         <h2>Войти</h2>
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('user.login') }}">
           <div class="form-group">
             <label for="username">Имя пользователя</label>
             <input type="text" id="username" name="username" class="form-control" required>

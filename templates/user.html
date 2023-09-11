@@ -137,7 +137,7 @@
                         <p class="rejection-comment"><strong>Cтатья не прошла модерацию!</strong></p>
                     {% else %}
                         <p class="article-excerpt">{{ article.excerpt }}</p>
-                        <form action="{{ url_for('display_article', id=article.id) }}" style="display: inline-block;">
+                        <form action="{{ url_for('article.display_article', id=article.id) }}" style="display: inline-block;">
                             <button type="submit" class="custom-btn">Открыть</button>
                         </form>
                     {% endif %}

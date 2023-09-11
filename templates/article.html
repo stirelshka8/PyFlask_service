@@ -121,7 +121,7 @@
         {{ body | safe }}
       </div>
     <hr>
-    <p class="author-info">Авторъ: <a href="{{ url_for('user', username=author) }}">{{ author }}</a></p>
+    <p class="author-info">Авторъ: <a href="{{ url_for('user.user', username=author) }}">{{ author }}</a></p>
     <p class="author-info">Дата создания:  {{ date_created }}</p>
     <div class="article-actions">
         <form method="post" action="{{ url_for('article.like_article', id=article.id) }}" style="display: inline-block;">

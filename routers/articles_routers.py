@@ -24,7 +24,7 @@ def delete_article(id):
         db.session.commit()
         flash('Статья успешно удалена.', 'success')
 
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('user.dashboard'))
 
 
 @article_blueprint.route('/edit_article/<int:id>/', methods=['GET', 'POST'])

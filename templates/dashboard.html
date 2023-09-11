@@ -114,7 +114,7 @@
 {% block body %}
 <h1 class="prev">ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
 
-<a href="{{ url_for('user', username=current_user.username) }}" class="custom-btn">
+<a href="{{ url_for('user.user', username=current_user.username) }}" class="custom-btn">
   Информация о профиле
 </a>
 
@@ -123,7 +123,7 @@
   <h3 class="section-title">Изменение данных профиля</h3>
   <details class="user-info-details">
     <summary class="summary-button">Развернуть</summary>
-    <form method="POST" action="{{ url_for('update_user_info') }}" id="user-info-form">
+    <form method="POST" action="{{ url_for('user.update_user_info') }}" id="user-info-form">
       {{ form.hidden_tag() }}
       <div class="form-group">
         <label for="name">Имя:</label>
@@ -145,7 +145,7 @@
   <h3 class="section-title">Добавление статьи</h3>
   <details class="add-article-details">
     <summary class="summary-button">Развернуть</summary>
-    <form method="POST" action="{{ url_for('dashboard') }}" id="article-form">
+    <form method="POST" action="{{ url_for('user.dashboard') }}" id="article-form">
       {{ form.hidden_tag() }}
       <div class="form-group">
         <label for="title">Заголовок статьи:</label>
@@ -211,7 +211,7 @@
         {% for page_num in user_articles.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=3) %}
         {% if page_num %}
         <li class="page-item{% if user_articles.page == page_num %} active{% endif %}">
-          <a class="page-link" href="{{ url_for('dashboard', page=page_num) }}">{{ page_num }}</a>
+          <a class="page-link" href="{{ url_for('user.dashboard', page=page_num) }}">{{ page_num }}</a>
         </li>
         {% else %}
         <li class="page-item disabled"><span class="page-link">...</span></li>
