@@ -140,7 +140,7 @@
             </button>
         </form>
 
-        {% if current_user.username == author %}
+        {% if current_user.username == author or session.is_admin %}
             <form action="{{ url_for('article.edit_article', id=article.id) }}" style="display: inline-block;">
                 <button type="submit" class="custom-btn edit-btn">Редактировать</button>
             </form>
