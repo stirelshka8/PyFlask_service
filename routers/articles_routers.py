@@ -13,9 +13,7 @@ article_blueprint = Blueprint('article', __name__)
 @login_required
 def delete_article(id):
     article = Articles.query.get_or_404(id)
-    if current_user != article.author:
-        flash('Вы не имеете права удалять эту статью.', 'danger')
-    else:
+    if current_user == article.author or session['is_admin']:
         deleted_article = DeletedArticles(user=current_user, article=article)
         db.session.add(deleted_article)
 
@@ -24,6 +22,9 @@ def delete_article(id):
         db.session.commit()
         flash('Статья успешно удалена.', 'success')
 
+    else:
+        flash('Вы не имеете права удалять эту статью.', 'danger')
+
     return redirect(url_for('user.dashboard'))
 
 
@@ -31,20 +32,22 @@ def delete_article(id):
 @login_required
 def edit_article(id):
     article = Articles.query.get_or_404(id)
-    if current_user != article.author:
+    if current_user == article.author or session['is_admin']:
+        form = ArticleForm(obj=article)
+
+        if request.method == 'POST':
+            article.title = request.form['title']
+            article.body = request.form['body']
+            db.session.commit()
+            flash('Статья успешно отредактирована.', 'success')
+            return redirect(url_for('user.dashboard'))
+
+        return render_template('edit_article.html', form=form, article=article)
+
+    else:
+        print(session['is_admin'])
         flash('Вы не имеете права редактировать эту статью.', 'danger')
-        return redirect(url_for('dashboard'))
-
-    form = ArticleForm(obj=article)
-
-    if request.method == 'POST':
-        article.title = request.form['title']
-        article.body = request.form['body']
-        db.session.commit()
-        flash('Статья успешно отредактирована.', 'success')
         return redirect(url_for('user.dashboard'))
-
-    return render_template('edit_article.html', form=form, article=article)
 
 
 @article_blueprint.route('/article/<int:id>/')
