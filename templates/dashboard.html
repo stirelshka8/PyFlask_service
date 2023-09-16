@@ -1,233 +1,211 @@
 {% extends 'layout.html' %}
 
-{% block tytle %} Панель управления{% endblock%}
+{% block title %}Панель управления профилем{% endblock %}
 
 {% block style %}
-    .summary-button {
+    .profile-heading {
       background-color: #3498db;
-      padding: 5px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-      width: 100px;
-      border-radius: 10px;
+      padding: 25px;
+      border-radius: 20px 20px 20px 20px;
       color: white;
-      font-family: Arial, sans-serif;
       text-align: center;
-      margin-right: 10px;
-      margin-bottom: 10px;
-    }
-    .prev {
-      background-color: #9aceeb;
-      padding: 15px 30px; /* Увеличьте отступы для более просторного вида */
-      border-radius: 25px; /* Увеличьте радиус скругления углов */
-      color: white;
-      font-family: Arial, sans-serif;
-      font-size: 2rem; /* Увеличьте размер шрифта */
-      text-align: center;
-      margin-bottom: 20px; /* Уменьшите нижний отступ для лучшего баланса */
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Увеличьте насыщенность тени */
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Добавьте небольшую тень */
-      transition: background-color 0.2s, transform 0.2s; /* Добавьте плавные анимации */
-      cursor: pointer; /* Измените курсор при наведении */
+      margin: 20px;
     }
 
-    .prev:hover {
-      background-color: #6500db; /* Измените цвет при наведении */
-      transform: translateY(-3px); /* Небольшое поднятие элемента */
+    .profile-section {
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px 20px 20px 20px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+      margin-bottom: 20px;
     }
-    .add-article-details,
-    .user-articles-details,
-    .user-info-details {
-      margin-top: 20px;
+
+    .profile-section h3 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #3498db;
+      text-transform: uppercase;
     }
+
+    .profile-form-group {
+      margin-bottom: 20px;
+    }
+
+    .profile-label {
+      font-weight: bold;
+    }
+
+    .profile-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .profile-submit-button {
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      color: #ffffff;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+
+    .profile-submit-button:hover {
+      background-color: #6500db;
+    }
+
     .article-card {
       border: 1px solid #e0e0e0;
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
       background-color: #ffffff;
       margin-bottom: 20px;
+      width: 100%; /* Добавьте ширину 100% */
     }
-    .article-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    }
+
     .article-card .card-body {
       padding: 20px;
     }
+
     .article-title {
       font-size: 1.2rem;
       margin-bottom: 10px;
     }
+
+    .article-status {
+      font-size: 1rem;
+      color: #555555;
+      margin-bottom: 15px;
+    }
+
     .article-excerpt {
       font-size: 1rem;
       color: #555555;
       margin-bottom: 15px;
     }
-    .custom-btn {
-      background-color: #3498db;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 15px;
-      color: #ffffff;
-      font-size: 0.9rem;
-      text-decoration: none;
-      transition: background-color 0.2s;
-      margin-right: 5px;
-    }
-    .custom-btn:hover {
-      background-color: #6500db;
-    }
-    .edit-btn {
-      background-color: #813124;
-    }
-    .edit-btn:hover {
-      background-color: #6500db;
-    }
-    .delete-btn {
-      background-color: #e74c3c;
-    }
-    .delete-btn:hover {
-      background-color: #6500db;
-    }
-    .no-articles-message {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 10vh;
-    }
-    /* Стили для надписей "Добавить статью" и "Ваши статьи" */
-    .section-title {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      text-align: center;
-      color: #3498db; /* Цвет можно настроить по вашему выбору */
-      text-transform: uppercase;
-    }
+
     .rejection-comment {
-    background-color: red;
-    color: yellow;
-    text-align: center;
-    padding: 10px;
-    border-radius: 5px;
+      background-color: red;
+      color: yellow;
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .row {
+      display: flex; /* Используйте flex для распределения элементов */
+      flex-wrap: wrap; /* Разрешить перенос элементов на новую строку */
+      margin-right: -15px;
+      margin-left: -15px;
     }
 {% endblock %}
 
 {% block body %}
-<h1 class="prev">ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
+<div class="profile-heading">
+  <h1>ПАНЕЛЬ УПРАВЛЕНИЯ ПРОФИЛЕМ</h1>
+</div>
 
-<a href="{{ url_for('user.user', username=current_user.username) }}" class="custom-btn">
-  Информация о профиле
-</a>
-
-
-<section>
-  <h3 class="section-title">Изменение данных профиля</h3>
-  <details class="user-info-details">
-    <summary class="summary-button">Развернуть</summary>
-    <form method="POST" action="{{ url_for('user.update_user_info') }}" id="user-info-form">
-      {{ form.hidden_tag() }}
-      <div class="form-group">
-        <label for="name">Имя:</label>
-        <input type="text" id="name" class="form-control" name="name" value="{{ current_user.name }}" required>
-      </div>
-      <div class="form-group">
-        <label for="new_password">Новый пароль:</label>
-        <input type="password" id="new_password" class="form-control" name="new_password" required>
-      </div>
-      <div class="form-group">
-        <label for="confirm_password">Подтвердите новый пароль:</label>
-        <input type="password" id="confirm_password" class="form-control" name="confirm_password" required>
-      </div>
-      <button type="submit" class="btn btn-primary">Сохранить</button>
-    </form>
-  </details>
-</section>
-<section>
-  <h3 class="section-title">Добавление статьи</h3>
-  <details class="add-article-details">
-    <summary class="summary-button">Развернуть</summary>
-    <form method="POST" action="{{ url_for('user.dashboard') }}" id="article-form">
-      {{ form.hidden_tag() }}
-      <div class="form-group">
-        <label for="title">Заголовок статьи:</label>
-        <input type="text" id="title" class="form-control" name="title" required>
-      </div>
-      <div class="form-group">
-        <label for="editor">Тело статьи:</label>
-        <textarea id="editor" class="form-control" name="{{ form.body.name }}" style="display: none">{{ form.body.data }}</textarea>
-        <script>
-          ClassicEditor
-            .create(document.querySelector('#editor'))
-            .catch(error => {
-              console.error(error);
-            });
-        </script>
-      </div>
-      <button type="submit" class="btn btn-primary">Добавить</button>
-    </form>
-  </details>
+<section class="profile-section">
+  <h3>Изменение данных профиля</h3>
+  <form method="POST" action="{{ url_for('user.update_user_info') }}" id="user-info-form">
+    {{ form.hidden_tag() }}
+    <div class="profile-form-group">
+      <label for="name" class="profile-label">Имя:</label>
+      <input type="text" id="name" class="profile-input" name="name" value="{{ current_user.name }}" required>
+    </div>
+    <div class="profile-form-group">
+      <label for="new_password" class="profile-label">Новый пароль:</label>
+      <input type="password" id="new_password" class="profile-input" name="new_password" required>
+    </div>
+    <div class="profile-form-group">
+      <label for="confirm_password" class="profile-label">Подтвердите новый пароль:</label>
+      <input type="password" id="confirm_password" class="profile-input" name="confirm_password" required>
+    </div>
+    <button type="submit" class="profile-submit-button">Сохранить</button>
+  </form>
 </section>
 
-<section>
-  <h3 class="section-title">Ваши статьи [ {{ total_articles }} ]</h3>
-  <details class="user-articles-details">
-    <summary class="summary-button">Развернуть</summary>
-    <div class="row">
-      {% if total_articles > 0 %}
-      {% for article in user_articles.items %}
-      <div class="col-md-4 mb-4">
-        <div class="article-card">
-          <div class="card-body">
-              <h4 class="card-title article-title">{{ article.title }}</h4>
-              <h5 class="article-status">Статус: {{ article.status }}</h5>
-              {% if article.status == 'отклонена' %}
-                <p class="rejection-comment"><strong>Ваша статья не прошла модерацию!</strong></p>
-                <form action="{{ url_for('delete_article', id=article.id) }}" method="post" style="display: inline-block;">
-                  <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Данная статья будет удалена!')">Удалить</button>
-                </form>
-              {% else %}
-              <p class="article-excerpt">{{ article.excerpt }}</p>
-              <form action="{{ url_for('article.display_article', id=article.id) }}" style="display: inline-block;">
-                <button type="submit" class="custom-btn">Открыть</button>
-              </form>
-              <form action="{{ url_for('article.edit_article', id=article.id) }}" style="display: inline-block;">
-                <button type="submit" class="custom-btn edit-btn">Редактировать</button>
-              </form>
+<section class="profile-section">
+  <h3>Добавление статьи</h3>
+  <form method="POST" action="{{ url_for('user.dashboard') }}" id="article-form">
+    {{ form.hidden_tag() }}
+    <div class="profile-form-group">
+      <label for="title" class="profile-label">Заголовок статьи:</label>
+      <input type="text" id="title" class="profile-input" name="title" required>
+    </div>
+    <div class="profile-form-group">
+      <label for="editor" class="profile-label">Тело статьи:</label>
+      <textarea id="editor" class="profile-input" name="{{ form.body.name }}" style="display: none">{{ form.body.data }}</textarea>
+      <script>
+        ClassicEditor
+          .create(document.querySelector('#editor'))
+          .catch(error => {
+            console.error(error);
+          });
+      </script>
+    </div>
+    <button type="submit" class="profile-submit-button">Добавить</button>
+  </form>
+</section>
+
+<section class="profile-section">
+  <h3>Ваши статьи [ {{ total_articles }} ]</h3>
+  <div class="row">
+    {% if total_articles > 0 %}
+    {% for article in user_articles.items %}
+    <div class="col-md-4 mb-4">
+      <div class="article-card">
+        <div class="card-body">
+            <h4 class="card-title article-title">{{ article.title }}</h4>
+            <h5 class="article-status">Статус: {{ article.status }}</h5>
+            {% if article.status == 'отклонена' %}
+              <p class="rejection-comment"><strong>Ваша статья не прошла модерацию!</strong></p>
               <form action="{{ url_for('article.delete_article', id=article.id) }}" method="post" style="display: inline-block;">
-                <button type="submit" class="custom-btn delete-btn" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
+                <button type="submit" class="profile-submit-button" onclick="return confirm('Данная статья будет удалена!')">Удалить</button>
               </form>
-            {% endif %}
-          </div>
+            {% else %}
+            <p class="article-excerpt">{{ article.excerpt }}</p>
+            <form action="{{ url_for('article.display_article', id=article.id) }}" style="display: inline-block;">
+              <button type="submit" class="profile-submit-button">Открыть</button>
+            </form>
+            <form action="{{ url_for('article.edit_article', id=article.id) }}" style="display: inline-block;">
+              <button type="submit" class="profile-submit-button">Редактировать</button>
+            </form>
+            <form action="{{ url_for('article.delete_article', id=article.id) }}" method="post" style="display: inline-block;">
+              <button type="submit" class="profile-submit-button" onclick="return confirm('Вы уверены, что хотите удалить эту статью?')">Удалить</button>
+            </form>
+          {% endif %}
         </div>
       </div>
-      {% endfor %}
-      {% else %}
-      <div class="no-articles-message">
-        <h1>Нет статей. &#128546;</h1>
-      </div>
-      {% endif %}
     </div>
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% for page_num in user_articles.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=3) %}
-        {% if page_num %}
-        <li class="page-item{% if user_articles.page == page_num %} active{% endif %}">
-          <a class="page-link" href="{{ url_for('user.dashboard', page=page_num) }}">{{ page_num }}</a>
-        </li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">...</span></li>
-        {% endif %}
-        {% endfor %}
-      </ul>
-    </nav>
-  </details>
+    {% endfor %}
+    {% else %}
+    <div class="no-articles-message">
+      <h1>Нет статей. &#128546;</h1>
+    </div>
+    {% endif %}
+  </div>
+  <nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+      {% for page_num in user_articles.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=3) %}
+      {% if page_num %}
+      <li class="page-item{% if user_articles.page == page_num %} active{% endif %}">
+        <a class="page-link" href="{{ url_for('user.dashboard', page=page_num) }}">{{ page_num }}</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">...</span></li>
+      {% endif %}
+      {% endfor %}
+    </ul>
+  </nav>
 </section>
-
-
 {% endblock %}
-
 {% block scp %}
 <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
 <script>
@@ -242,40 +220,4 @@
       console.error(err.stack);
     });
 </script>
-<script>
-  const addArticleDetails = document.querySelector('.add-article-details');
-  const addArticleSummary = addArticleDetails.querySelector('.summary-button');
-
-  addArticleDetails.addEventListener('toggle', () => {
-    if (addArticleDetails.open) {
-      addArticleSummary.textContent = 'Свернуть';
-    } else {
-      addArticleSummary.textContent = 'Развернуть';
-    }
-  });
-
-  const userArticlesDetails = document.querySelector('.user-articles-details');
-  const userArticlesSummary = userArticlesDetails.querySelector('.summary-button');
-
-  userArticlesDetails.addEventListener('toggle', () => {
-    if (userArticlesDetails.open) {
-      userArticlesSummary.textContent = 'Свернуть';
-    } else {
-      userArticlesSummary.textContent = 'Развернуть';
-    }
-  });
-
-
-  const userInfoDetails = document.querySelector('.user-info-details');
-  const userInfoSummary = userInfoDetails.querySelector('.summary-button');
-
-  userInfoDetails.addEventListener('toggle', () => {
-    if (userInfoDetails.open) {
-      userInfoSummary.textContent = 'Свернуть';
-    } else {
-      userInfoSummary.textContent = 'Развернуть';
-    }
-  });
-</script>
 {% endblock %}
-
