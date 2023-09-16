@@ -2,13 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Super-Mega </title>
+    <title>{% block tytle %}{% endblock%}</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <style>
       {% block style%}{% endblock%}
       body {
-          background-image: url("/static/image/bg-0.png");
+          background-image: url("/static/image/bg-01.png");
           background-position: center;
+      }
+      .navbar {
+          background-color: #e3c0eb; /* Используйте цвет, который вам нужен */
       }
     </style>
 

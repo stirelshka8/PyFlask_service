@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, url_for
+from flask import Flask, render_template, flash, send_from_directory
 from flask_principal import Principal, Permission, RoleNeed
 from routers.articles_routers import article_blueprint
 from routers.admin_routers import admin_blueprint
@@ -76,8 +76,8 @@ def index():
 
 
 @app.route('/favicon.ico')
-def favicon():
-    return url_for('static', filename='image/favicon.ico')
+def fav():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'image/fav.ico')
 
 
 @app.route('/about')
