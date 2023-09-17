@@ -1,0 +1,79 @@
+{% extends 'layout.html' %}
+
+{% block title %}Панель управления профилем{% endblock %}
+
+{% block style %}
+    .profile-heading {
+      background-color: #3498db;
+      padding: 25px;
+      border-radius: 20px 20px 20px 20px;
+      color: white;
+      text-align: center;
+      margin: 20px;
+    }
+
+    .profile-section {
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px 20px 20px 20px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+      margin-bottom: 20px;
+    }
+
+    .profile-section h3 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #3498db;
+      text-transform: uppercase;
+    }
+
+    .profile-form-group {
+      margin-bottom: 20px;
+    }
+
+    .profile-label {
+      font-weight: bold;
+    }
+
+    .profile-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .profile-submit-button {
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      color: #ffffff;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+
+    .profile-submit-button:hover {
+      background-color: #6500db;
+    }
+{% endblock %}
+
+{% block body %}
+<section class="profile-section">
+  <h3>Изменение пароля пользователя</h3>
+  <form method="POST" action="{{ url_for('user.update_pass') }}" id="user-info-form">
+    <div class="profile-form-group">
+      <label for="new_password" class="profile-label">Новый пароль:</label>
+      <input type="password" id="new_password" class="profile-input" name="new_password" required>
+    </div>
+    <div class="profile-form-group">
+      <label for="confirm_password" class="profile-label">Подтвердите новый пароль:</label>
+      <input type="password" id="confirm_password" class="profile-input" name="confirm_password" required>
+    </div>
+    <button type="submit" class="profile-submit-button">Сохранить</button>
+  </form>
+</section>
+
+{% endblock %}

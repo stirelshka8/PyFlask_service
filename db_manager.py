@@ -12,6 +12,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), unique=True)
     username = db.Column(db.String(30), unique=True)
     password = db.Column(db.String(100))
+    token = db.Column(db.String(100))
+    user_information = db.Column(db.String(300))
     articles = db.relationship('Articles', backref='author')
     roles = db.relationship('Role', secondary='user_roles')
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)

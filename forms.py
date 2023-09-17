@@ -18,8 +18,11 @@ class RegisterForm(Form):
     confirm = PasswordField('Подтверждение пароля')
 
 
-class UpdateUserInfoForm(Form):
+class UpdateUserName(Form):
     name = StringField('Имя', [validators.Length(min=1, max=255)])
+
+
+class UpdateUserPass(Form):
     new_password = PasswordField('Новый пароль', [validators.Length(min=6, max=255)])
     confirm_password = PasswordField('Подтвердите новый пароль',
                                      [validators.EqualTo('new_password', message='Passwords must match')])

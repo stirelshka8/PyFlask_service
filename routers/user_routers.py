@@ -1,9 +1,10 @@
 from flask import render_template, flash, redirect, request, url_for, session, Blueprint
 from flask_login import login_required, current_user, login_user
-from forms import RegisterForm, ArticleForm, UpdateUserInfoForm
-from db_manager import db, Articles, User, DeletedArticles
+from forms import RegisterForm, ArticleForm, UpdateUserName, UpdateUserPass
+from db_manager import db, Articles, User, DeletedArticles, Role
 from flask_paginate import Pagination
 from passlib.hash import sha256_crypt
+import secrets
 import os
 
 user_blueprint = Blueprint('user', __name__)
@@ -48,7 +49,6 @@ def user(username):
 
 @user_blueprint.route('/register', methods=['GET', 'POST'])
 def register():
-    # TODO: Создать в БД таблицу где будет указываться параметр аналогичный тому который в переменной окружения. И через OR сделать проверку и его
     if (os.environ.get('REGISTER_OFF')).lower() == 'false':
         form = RegisterForm(request.form)
         if request.method == 'POST' and form.validate():
@@ -69,6 +69,12 @@ def register():
                 return redirect(url_for('register'))
 
             new_user = User(name=name, email=email, username=username, password=password)
+
+            user_role = Role.query.filter_by(name='USER').first()
+            if user_role:
+                new_user.roles.append(user_role)
+
+            new_user.token = secrets.token_hex(16)
 
             db.session.add(new_user)
             db.session.commit()
@@ -127,17 +133,40 @@ def login():
 @user_blueprint.route('/update_user_info', methods=['POST'])
 @login_required
 def update_user_info():
-    form = UpdateUserInfoForm(request.form)
+
+    form = UpdateUserName(request.form)
+
     if form.validate():
         current_user.name = form.name.data
-        if form.new_password.data:
-            current_user.password = sha256_crypt.hash(str(form.new_password.data))
 
         db.session.commit()
         flash('Информация о пользователе успешно обновлена.', 'success')
     else:
-        flash('Ошибка при обновлении информации о пользователе.', 'danger')
+        flash(f'Ошибка при обновлении информации о пользователе.', 'danger')
+
     return redirect(url_for('user.dashboard'))
+
+
+@user_blueprint.route('/update_pass', methods=['GET', 'POST'])
+@login_required
+def update_pass():
+    if request.method == 'POST':
+
+        form = UpdateUserPass(request.form)
+
+        if form.new_password.data and form.validate():
+            current_user.password = sha256_crypt.hash(str(form.new_password.data))
+
+            db.session.commit()
+            flash('Пароль именён!.', 'success')
+        else:
+            flash('Ошибка смены пароля!.', 'danger')
+
+        return redirect(url_for('user.dashboard'))
+
+    users = User.query.filter_by(username=session['username']).first()
+
+    return render_template('edit_pass.html', user=users)
 
 
 @user_blueprint.route('/dashboard', methods=['GET', 'POST'])

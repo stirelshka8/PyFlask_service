@@ -21,6 +21,18 @@
       margin-bottom: 20px;
     }
 
+    .profile-section-nav {
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center; /* Центрирование по горизонтали */
+      align-items: center; /* Центрирование по вертикали */
+    }
+
     .profile-section h3 {
       font-size: 1.5rem;
       margin-bottom: 20px;
@@ -53,6 +65,17 @@
       font-size: 1rem;
       text-decoration: none;
       transition: background-color 0.2s;
+    }
+
+    .profile-nav {
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      color: #ffffff;
+      font-size: 1rem;
+      text-decoration: none;
+      margin-left: 5px; /* Добавлено расстояние слева */
     }
 
     .profile-submit-button:hover {
@@ -111,6 +134,17 @@
   <h1>ПАНЕЛЬ УПРАВЛЕНИЯ ПРОФИЛЕМ</h1>
 </div>
 
+<section class="profile-section-nav">
+
+    <a href="/update_pass" class="profile-nav">
+        Изменить пароль
+    </a>
+
+    <a href="{{ url_for('user.user', username=current_user.username) }}" class="profile-nav">
+      Информация о профиле
+    </a>
+</section>
+
 <section class="profile-section">
   <h3>Изменение данных профиля</h3>
   <form method="POST" action="{{ url_for('user.update_user_info') }}" id="user-info-form">
@@ -118,14 +152,6 @@
     <div class="profile-form-group">
       <label for="name" class="profile-label">Имя:</label>
       <input type="text" id="name" class="profile-input" name="name" value="{{ current_user.name }}" required>
-    </div>
-    <div class="profile-form-group">
-      <label for="new_password" class="profile-label">Новый пароль:</label>
-      <input type="password" id="new_password" class="profile-input" name="new_password" required>
-    </div>
-    <div class="profile-form-group">
-      <label for="confirm_password" class="profile-label">Подтвердите новый пароль:</label>
-      <input type="password" id="confirm_password" class="profile-input" name="confirm_password" required>
     </div>
     <button type="submit" class="profile-submit-button">Сохранить</button>
   </form>
