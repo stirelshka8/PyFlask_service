@@ -18,8 +18,9 @@ class RegisterForm(Form):
     confirm = PasswordField('Подтверждение пароля')
 
 
-class UpdateUserName(Form):
+class UpdateUser(Form):
     name = StringField('Имя', [validators.Length(min=1, max=255)])
+    user_information = StringField('Дополнительная информация', [validators.Length(min=1, max=300)])
 
 
 class UpdateUserPass(Form):

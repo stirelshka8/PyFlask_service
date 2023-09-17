@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, request, url_for, session, Blueprint
-from flask_login import login_required, current_user, login_user
-from forms import RegisterForm, ArticleForm, UpdateUserName, UpdateUserPass
+from forms import RegisterForm, ArticleForm, UpdateUserPass, UpdateUser
 from db_manager import db, Articles, User, DeletedArticles, Role
+from flask_login import login_required, current_user, login_user
 from flask_paginate import Pagination
 from passlib.hash import sha256_crypt
 import secrets
@@ -37,10 +37,12 @@ def user(username):
 
         total_deleted_articles = DeletedArticles.query.filter_by(user=users).count()
 
+        user_info = users.user_information
+
         return render_template('user.html', user=users, author_articles=author_articles,
                                total_author_articles=total_author_articles, total_author_likes=total_author_likes,
                                registration_date=registration_date, total_rejected_articles=total_rejected_articles,
-                               total_deleted_articles=total_deleted_articles)
+                               total_deleted_articles=total_deleted_articles, user_info=user_info)
 
     else:
         flash('Пользователь не найден', 'danger')
@@ -134,10 +136,11 @@ def login():
 @login_required
 def update_user_info():
 
-    form = UpdateUserName(request.form)
+    form = UpdateUser(request.form)
 
     if form.validate():
         current_user.name = form.name.data
+        current_user.user_information = form.user_information.data
 
         db.session.commit()
         flash('Информация о пользователе успешно обновлена.', 'success')
