@@ -146,31 +146,17 @@
 
 <section class="profile-section-nav">
 
+    <a href="/update_user_info" class="profile-nav">
+        Редактировать профиль
+    </a>
+
     <a href="/update_pass" class="profile-nav">
-        Изменить пароль
+        Редактировать пароль
     </a>
 
     <a href="{{ url_for('user.user', username=current_user.username) }}" class="profile-nav">
-      Информация о профиле
+        Информация о профиле
     </a>
-</section>
-
-<section class="profile-section">
-  <h3>Изменение данных профиля</h3>
-  <form method="POST" action="{{ url_for('user.update_user_info') }}" id="user-info-form">
-    {{ form.hidden_tag() }}
-    <div class="profile-form-group">
-      <label for="name" class="profile-label">Имя:</label>
-      <input type="text" id="name" class="profile-input" name="name" value="{{ current_user.name }}" required>
-    </div>
-
-    <div class="profile-form-group">
-      <label for="user_information" class="profile-label">Дополнительная информация:</label>
-      <textarea id="user_information" class="profile-input-info" name="user_information" required>{{ current_user.user_information }}</textarea>
-      <span id="character-count">0</span>/300 символов
-    </div>
-    <button type="submit" class="profile-submit-button">Сохранить</button>
-  </form>
 </section>
 
 <section class="profile-section">
@@ -184,13 +170,7 @@
     <div class="profile-form-group">
       <label for="editor" class="profile-label">Тело статьи:</label>
       <textarea id="editor" class="profile-input" name="{{ form.body.name }}" style="display: none">{{ form.body.data }}</textarea>
-      <script>
-        ClassicEditor
-          .create(document.querySelector('#editor'))
-          .catch(error => {
-            console.error(error);
-          });
-      </script>
+      <p style="text-align: center;"><span style="color: #ff0000;"><strong>В настоящее время добавить изображение возможно только со сторонних ресурсов.</strong></span></p>
     </div>
     <button type="submit" class="profile-submit-button">Добавить</button>
   </form>
@@ -250,31 +230,24 @@
 {% endblock %}
 {% block scp %}
 <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
+
 <script>
-  ClassicEditor
-    .create(document.querySelector('#editor'), {
-      // toolbar: [ 'heading', '|', 'bold', 'italic', 'link' ]
-    })
-    .then(editor => {
-      window.editor = editor;
-    })
-    .catch(err => {
-      console.error(err.stack);
-    });
+ClassicEditor
+  .create(document.querySelector('#editor'))
+  .catch(error => {
+    console.error(error);
+  });
 </script>
 
 <script>
-  // JavaScript для подсчета всех символов включая пробелы и переносы строк
   const textareaElement = document.getElementById("user_information");
   const characterCountElement = document.getElementById("character-count");
 
-  // Функция для инициализации счетчика при загрузке страницы
   function initializeCharacterCount() {
     const currentText = textareaElement.value;
     const currentLength = currentText.length;
     characterCountElement.textContent = currentLength;
 
-    // Проверка, превышено ли ограничение по символам
     if (currentLength > 300) {
       characterCountElement.classList.add("character-limit-exceeded");
     } else {
@@ -282,16 +255,13 @@
     }
   }
 
-  // Вызываем функцию инициализации при загрузке страницы
   window.addEventListener("load", initializeCharacterCount);
 
-  // Слушатель события ввода текста
   textareaElement.addEventListener("input", function() {
     const currentText = textareaElement.value;
     const currentLength = currentText.length;
     characterCountElement.textContent = currentLength;
 
-    // Проверка, превышено ли ограничение по символам
     if (currentLength > 300) {
       characterCountElement.classList.add("character-limit-exceeded");
     } else {

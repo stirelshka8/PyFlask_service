@@ -132,22 +132,27 @@ def login():
     return render_template('login.html')
 
 
-@user_blueprint.route('/update_user_info', methods=['POST'])
+@user_blueprint.route('/update_user_info', methods=['GET', 'POST'])
 @login_required
 def update_user_info():
+    if request.method == 'POST':
 
-    form = UpdateUser(request.form)
+        form = UpdateUser(request.form)
 
-    if form.validate():
-        current_user.name = form.name.data
-        current_user.user_information = form.user_information.data
+        if form.validate():
+            current_user.name = form.name.data
+            current_user.user_information = form.user_information.data
 
-        db.session.commit()
-        flash('Информация о пользователе успешно обновлена.', 'success')
-    else:
-        flash(f'Ошибка при обновлении информации о пользователе.', 'danger')
+            db.session.commit()
+            flash('Информация о пользователе успешно обновлена.', 'success')
+        else:
+            flash(f'Ошибка при обновлении информации о пользователе.', 'danger')
 
-    return redirect(url_for('user.dashboard'))
+        return redirect(url_for('user.dashboard'))
+
+    users = User.query.filter_by(username=session['username']).first()
+
+    return render_template('edit_info.html', user=users)
 
 
 @user_blueprint.route('/update_pass', methods=['GET', 'POST'])

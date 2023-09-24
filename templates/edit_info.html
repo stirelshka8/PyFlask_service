@@ -1,0 +1,132 @@
+{% extends 'layout.html' %}
+
+{% block title %}Панель управления профилем{% endblock %}
+
+{% block style %}
+    .profile-heading {
+      background-color: #3498db;
+      padding: 25px;
+      border-radius: 20px 20px 20px 20px;
+      color: white;
+      text-align: center;
+      margin: 20px;
+    }
+
+    .profile-section {
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px 20px 20px 20px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+      margin-bottom: 20px;
+    }
+
+    .profile-section-nav {
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center; /* Центрирование по горизонтали */
+      align-items: center; /* Центрирование по вертикали */
+    }
+
+    .profile-section h3 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #3498db;
+      text-transform: uppercase;
+    }
+
+    .profile-form-group {
+      margin-bottom: 20px;
+    }
+
+    .profile-label {
+      font-weight: bold;
+    }
+
+    .profile-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .profile-submit-button {
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      color: #ffffff;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+
+    .profile-input-info {
+        width: 100%; /* Ширина поля занимает 100% доступной ширины */
+        height: 200px; /* Высота поля ввода в пикселях (можете настроить по своему усмотрению) */
+        resize: vertical; /* Разрешить изменение высоты (но не ширины) поля ввода пользователем */
+    }
+{% endblock %}
+
+{% block body %}
+<section class="profile-section">
+  <h3>Изменение данных профиля</h3>
+  <form method="POST" action="{{ url_for('user.update_user_info') }}" id="user-info-form">
+    <div class="profile-form-group">
+      <label for="name" class="profile-label">Имя:</label>
+      <input type="text" id="name" class="profile-input" name="name" value="{{ current_user.name }}" required>
+    </div>
+
+    <div class="profile-form-group">
+      <label for="user_information" class="profile-label">Дополнительная информация:</label>
+      <textarea id="user_information" class="profile-input-info" name="user_information" required>{{ current_user.user_information }}</textarea>
+      <span id="character-count">0</span>/300 символов
+    </div>
+    <button type="submit" class="profile-submit-button">Сохранить</button>
+  </form>
+</section>
+
+<script>
+  // JavaScript для подсчета всех символов включая пробелы и переносы строк
+  const textareaElement = document.getElementById("user_information");
+  const characterCountElement = document.getElementById("character-count");
+
+  // Функция для инициализации счетчика при загрузке страницы
+  function initializeCharacterCount() {
+    const currentText = textareaElement.value;
+    const currentLength = currentText.length;
+    characterCountElement.textContent = currentLength;
+
+    // Проверка, превышено ли ограничение по символам
+    if (currentLength > 300) {
+      characterCountElement.classList.add("character-limit-exceeded");
+    } else {
+      characterCountElement.classList.remove("character-limit-exceeded");
+    }
+  }
+
+  // Вызываем функцию инициализации при загрузке страницы
+  window.addEventListener("load", initializeCharacterCount);
+
+  // Слушатель события ввода текста
+  textareaElement.addEventListener("input", function() {
+    const currentText = textareaElement.value;
+    const currentLength = currentText.length;
+    characterCountElement.textContent = currentLength;
+
+    // Проверка, превышено ли ограничение по символам
+    if (currentLength > 300) {
+      characterCountElement.classList.add("character-limit-exceeded");
+    } else {
+      characterCountElement.classList.remove("character-limit-exceeded");
+    }
+  });
+</script>
+
+{% endblock %}
