@@ -54,14 +54,14 @@ if (os.environ.get('SESSION_TYPE')).lower() == 'redis':
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_PERMANENT'] = True
     app.config['SESSION_USE_SIGNER'] = True
-    app.config['SESSION_KEY_PREFIX'] = 'flpy_'
+    app.config['SESSION_KEY_PREFIX'] = os.environ.get('SESSION_KEY_PREFIX')
     app.config['SESSION_REDIS'] = redis.StrictRedis(
         host=os.environ.get('REDIS_HOST'),
         port=os.environ.get('REDIS_PORT'),
         db=os.environ.get('REDIS_DB'),
         password=os.environ.get('REDIS_PASS')
     )
-    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
+    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=int(os.environ.get('SESSION_TIME')))
 elif (os.environ.get('SESSION_TYPE')).lower() == 'file':
     app.config['SESSION_TYPE'] = 'filesystem'
 else:
