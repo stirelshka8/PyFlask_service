@@ -185,11 +185,11 @@ def like_article(id):
     if current_user in article.likes_users:
         article.likes -= 1
         article.likes_users.remove(current_user)
-        flash('Пометка удалена.', 'info')
+        flash('Отметка удалена.', 'info')
     else:
         article.likes += 1
         article.likes_users.append(current_user)
-        flash('Статья помечена как понравившаяся.', 'success')
+        flash('Статья отмечена как понравившаяся.', 'success')
 
     db.session.commit()
 

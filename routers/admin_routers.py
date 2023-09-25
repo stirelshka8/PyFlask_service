@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, request, url_for, session, Blueprint
+from flask import render_template, flash, redirect, request, url_for, Blueprint
 from flask_login import login_required, current_user
 from db_manager import db, Articles, DeletedArticles
 from flask_paginate import Pagination
