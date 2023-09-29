@@ -61,7 +61,7 @@ if (os.environ.get('SESSION_TYPE')).lower() == 'redis':
         db=os.environ.get('REDIS_DB'),
         password=os.environ.get('REDIS_PASS')
     )
-    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=int(os.environ.get('SESSION_TIME')))
+    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)
 elif (os.environ.get('SESSION_TYPE')).lower() == 'file':
     app.config['SESSION_TYPE'] = 'filesystem'
 else:

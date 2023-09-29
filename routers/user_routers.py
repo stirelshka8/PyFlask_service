@@ -1,4 +1,6 @@
 from flask import render_template, flash, redirect, request, url_for, session, Blueprint
+
+import db_manager
 from forms import RegisterForm, ArticleForm, UpdateUserPass, UpdateUser
 from db_manager import db, Articles, User, DeletedArticles, Role
 from flask_login import login_required, current_user, login_user
@@ -103,10 +105,17 @@ def login():
             session['logged_in'] = True
             session['username'] = username
 
-            if users.has_role('admin'):
+            if users.has_role('super_admin'):
+                session['is_super_admin'] = True
+            elif users.has_role('admin'):
                 session['is_admin'] = True
+            elif users.has_role('moder'):
+                session['is_moder'] = True
             else:
+                session['is_super_admin'] = False
                 session['is_admin'] = False
+                session['is_moder'] = False
+                session['is_user'] = True
 
             login_user(users)
 
@@ -199,6 +208,7 @@ def dashboard():
         return redirect(url_for('user.dashboard'))
 
     users = User.query.filter_by(username=session['username']).first()
+    role = str(users.get_roles()[0]).upper()
 
     user_articles = (Articles.query
                      .filter_by(author=current_user)
@@ -209,5 +219,5 @@ def dashboard():
 
     pagination = Pagination(page=page, per_page=per_page, total=total_articles, css_framework='bootstrap4')
 
-    return render_template('dashboard.html', user=users, user_articles=user_articles,
+    return render_template('dashboard.html', user=users, role=role, user_articles=user_articles,
                            total_articles=total_articles, pagination=pagination, form=form)

@@ -25,6 +25,9 @@ class User(db.Model, UserMixin):
         related_roles = self.roles
         return any(role.name == role_name for role in related_roles)
 
+    def get_roles(self):
+        return [role.name for role in self.roles]
+
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
