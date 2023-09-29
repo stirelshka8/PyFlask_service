@@ -4,3 +4,4 @@ __pycache__
 /instance/myflaskblog.db
 /.env
 /flask_session/
+/migrations/

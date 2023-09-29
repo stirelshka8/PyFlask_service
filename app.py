@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, send_from_directory, request
+from flask import Flask, render_template, flash, send_from_directory
 from flask_principal import Principal, Permission, RoleNeed
 from routers.articles_routers import article_blueprint
 from routers.admin_routers import admin_blueprint
