@@ -1,0 +1,59 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+  <div class="container mt-5">
+    <h1 class="mb-4">Личные сообщения</h1>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h2>Отправить сообщение</h2>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('user.send_message_route') }}">
+          <div class="form-group">
+            <label for="recipient_username">Кому отправляем:</label>
+            <input type="text" class="form-control" id="recipient_username" name="recipient_username" required>
+          </div>
+          <div class="form-group">
+            <label for="message_text">Сообщение:</label>
+            <textarea class="form-control" id="message_text" name="message_text" rows="4" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h2>Полученные</h2>
+      </div>
+      <div class="card-body">
+        <ul class="list-group">
+          {% for message in received_messages %}
+            <li class="list-group-item">
+              <strong>От: {{ message.sender.username }}</strong>
+              <p>{{ message.message_text }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Sent Messages -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Отправленные</h2>
+      </div>
+      <div class="card-body">
+        <ul class="list-group">
+          {% for message in sent_messages %}
+            <li class="list-group-item">
+              <strong>Кому: {{ message.recipient.username }}</strong>
+              <p>{{ message.message_text }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endblock %}

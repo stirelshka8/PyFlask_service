@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, request, url_for, session, Blueprint
 from forms import RegisterForm, ArticleForm, UpdateUserPass, UpdateUser
-from db_manager import db, Articles, User, DeletedArticles, Role
+from db_manager import db, Articles, User, DeletedArticles, Role, send_message, get_user_messages
 from flask_login import login_required, current_user, login_user
 from flask_paginate import Pagination
 from passlib.hash import sha256_crypt
@@ -222,3 +222,24 @@ def dashboard():
 
     return render_template('dashboard.html', user=users, role=role, user_articles=user_articles,
                            total_articles=total_articles, pagination=pagination, form=form)
+
+
+@user_blueprint.route('/send_message', methods=['POST'])
+@login_required
+def send_message_route():
+    recipient_username = request.form['recipient_username']
+    recipient = User.query.filter_by(username=recipient_username).first()
+    if recipient:
+        message_text = request.form['message_text']
+        send_message(current_user, recipient, message_text)
+        flash('Message sent successfully!', 'success')
+    else:
+        flash('Recipient not found.', 'danger')
+    return redirect(url_for('user.messages'))
+
+
+@user_blueprint.route('/messages')
+@login_required
+def messages():
+    received_messages, sent_messages = get_user_messages(current_user)
+    return render_template('messages.html', received_messages=received_messages, sent_messages=sent_messages)

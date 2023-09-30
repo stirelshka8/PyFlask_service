@@ -6,6 +6,33 @@ from datetime import datetime
 db = SQLAlchemy()
 
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message_text = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+
+    def __init__(self, sender, recipient, message_text):
+        self.sender = sender
+        self.recipient = recipient
+        self.message_text = message_text
+
+
+def send_message(sender, recipient, message_text):
+    new_message = Message(sender=sender, recipient=recipient, message_text=message_text)
+    db.session.add(new_message)
+    db.session.commit()
+
+
+def get_user_messages(user):
+    received_messages = Message.query.filter_by(recipient=user).all()
+    sent_messages = Message.query.filter_by(sender=user).all()
+    return received_messages, sent_messages
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
