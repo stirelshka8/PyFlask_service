@@ -1,15 +1,16 @@
 from flask import Flask, render_template, flash, send_from_directory
 from flask_principal import Principal, Permission, RoleNeed
 from routers.articles_routers import article_blueprint
+from flask_login import login_required, current_user
 from routers.admin_routers import admin_blueprint
 from routers.user_routers import user_blueprint
+from flask_socketio import SocketIO, emit
 from flask_login import LoginManager
 from flask_ckeditor import CKEditor
 from flask_migrate import Migrate
 from flask_session import Session
 from db_manager import db, User
 from dotenv import load_dotenv
-import datetime
 import redis
 import os
 
@@ -24,6 +25,7 @@ else:
 admin_permission = Permission(RoleNeed("admin"))
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 login_manager = LoginManager()
 
 # Registering routes ----------------------
@@ -61,7 +63,7 @@ if (os.environ.get('SESSION_TYPE')).lower() == 'redis':
         db=os.environ.get('REDIS_DB'),
         password=os.environ.get('REDIS_PASS')
     )
-    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)
+    app.config['PERMANENT_SESSION_LIFETIME'] = int(os.environ.get('SESSION_LIFETIME'))
 elif (os.environ.get('SESSION_TYPE')).lower() == 'file':
     app.config['SESSION_TYPE'] = 'filesystem'
 else:
@@ -96,6 +98,23 @@ def unauthorized():
     return render_template('login.html')
 
 
+@app.route('/chat')
+@login_required
+def chat():
+    return render_template('chat.html')
+
+
+# Define a chat event handler
+@socketio.on('message')
+def handle_message(data):
+    try:
+        message = data['message']
+        sender = current_user.username
+        emit('message', {'message': message, 'sender': sender}, broadcast=True)
+    except KeyError:
+        pass
+
+
 if __name__ == '__main__':
-    # app.run(debug=True, host="192.168.1.10")
-    app.run(debug=True)
+    app.run(debug=True, host="192.168.1.10")
+    # app.run(debug=True)

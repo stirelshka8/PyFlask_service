@@ -30,8 +30,6 @@ class UpdateUserPass(Form):
 
 
 class ArticleForm(FlaskForm):
-
-
     title = StringField('title', validators=[DataRequired()])
     body = TextAreaField('body', validators=[DataRequired()])
 

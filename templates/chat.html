@@ -1,0 +1,82 @@
+{% extends 'layout.html' %}
+
+{% block style %}
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .chat-container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-messages {
+            overflow-y: scroll;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+
+        .message-input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .send-button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .down-info {
+            text-align: center;
+        }
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h2>OPFMessanger</h2>
+    <div class="chat-container">
+        <div class="chat-messages" id="chat-messages"></div>
+        <input type="text" class="message-input" id="message-input" placeholder="Напишите сообщение...">
+        <button class="send-button" id="send-button">Отправить</button>
+    </div>
+    <h5 class="down-info">Данный мессенджер не хранит переписку при выходе или перезагрузке страницы данные стираются.</h5>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+<script type="text/javascript">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    socket.on('message', function(data) {
+        var messageContainer = document.getElementById('chat-messages');
+        var message = document.createElement('div');
+        message.classList.add('message');
+        message.innerHTML = '<strong>' + data.sender + ':</strong> ' + data.message;
+        messageContainer.appendChild(message);
+    });
+
+    document.getElementById('send-button').onclick = function() {
+        var messageInput = document.getElementById('message-input');
+        var message = messageInput.value.trim();
+        if (message) {
+            messageInput.value = '';
+            socket.emit('message', {message: message});
+        }
+    };
+</script>
+{% endblock %}
