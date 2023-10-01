@@ -1,4 +1,6 @@
-from flask import Flask, render_template, flash, send_from_directory
+from flask import Flask, render_template, flash, send_from_directory, redirect, url_for, request
+
+from db_manager import db, User, get_user_by_username, add_contact
 from flask_principal import Principal, Permission, RoleNeed
 from routers.articles_routers import article_blueprint
 from flask_login import login_required, current_user
@@ -9,7 +11,6 @@ from flask_login import LoginManager
 from flask_ckeditor import CKEditor
 from flask_migrate import Migrate
 from flask_session import Session
-from db_manager import db, User
 from dotenv import load_dotenv
 import redis
 import os
@@ -113,6 +114,21 @@ def handle_message(data):
         emit('message', {'message': message, 'sender': sender}, broadcast=True)
     except KeyError:
         pass
+
+
+@app.route('/add_contact', methods=['GET', 'POST'])
+@login_required
+def add_contact_page():
+    if request.method == 'POST':
+        contact_username = request.form['contact_username']
+        contact = get_user_by_username(contact_username)
+        if contact:
+            user = current_user
+            add_contact(user, contact)
+            flash(f'{contact_username} добавлен в адресную книгу', 'success')
+        else:
+            flash('Пользователь не найден', 'danger')
+    return render_template('add_contact.html')
 
 
 if __name__ == '__main__':

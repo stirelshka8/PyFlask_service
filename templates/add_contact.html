@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+  <div class="container mt-5">
+    <h1 class="mb-4">Добавление в адресную книгу</h1>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h2>Добавить контакт</h2>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('add_contact_page') }}">
+          <div class="form-group">
+            <label for="contact_username">Имя пользователя:</label>
+            <input type="text" class="form-control" id="contact_username" name="contact_username" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Добавить в адресную книгу</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

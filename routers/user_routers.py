@@ -1,6 +1,9 @@
-from flask import render_template, flash, redirect, request, url_for, session, Blueprint
+from datetime import datetime
+
+from flask import render_template, flash, redirect, request, url_for, session, Blueprint, jsonify
 from forms import RegisterForm, ArticleForm, UpdateUserPass, UpdateUser
-from db_manager import db, Articles, User, DeletedArticles, Role, send_message, get_user_messages
+from db_manager import db, Articles, User, DeletedArticles, Role, get_user_messages, get_user_contacts, \
+    get_user_by_username, Message, get_messages_between_users, save_message, NewMessageNotification
 from flask_login import login_required, current_user, login_user
 from flask_paginate import Pagination
 from passlib.hash import sha256_crypt
@@ -227,19 +230,71 @@ def dashboard():
 @user_blueprint.route('/send_message', methods=['POST'])
 @login_required
 def send_message_route():
-    recipient_username = request.form['recipient_username']
-    recipient = User.query.filter_by(username=recipient_username).first()
+    recipient_username = request.json.get('recipient_username')
+    message_text = request.json.get('message_text')
+
+    recipient = get_user_by_username(recipient_username)
+
     if recipient:
-        message_text = request.form['message_text']
-        send_message(current_user, recipient, message_text)
-        flash('Message sent successfully!', 'success')
+        save_message(current_user, recipient, message_text)
+        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Создайте оповещение о новом сообщении
+        new_notification = NewMessageNotification(user_id=recipient.id, sender_username=current_user.username)
+        db.session.add(new_notification)
+        db.session.commit()
+
+        return jsonify({'timestamp': timestamp}), 201
     else:
-        flash('Recipient not found.', 'danger')
-    return redirect(url_for('user.messages'))
+        return jsonify({'error': 'Получатель не найден'}), 400
 
 
 @user_blueprint.route('/messages')
 @login_required
 def messages():
     received_messages, sent_messages = get_user_messages(current_user)
-    return render_template('messages.html', received_messages=received_messages, sent_messages=sent_messages)
+    address_book = get_user_contacts(current_user)
+
+    # Получите все оповещения о новых сообщениях для текущего пользователя
+    new_notifications = NewMessageNotification.query.filter_by(user_id=current_user.id, is_read=False).all()
+
+    return render_template('messages.html',
+                           received_messages=received_messages,
+                           sent_messages=sent_messages,
+                           address_book=address_book,
+                           new_notifications=new_notifications)
+
+
+@user_blueprint.route('/get_messages/<recipient_username>', methods=['GET'])
+@login_required
+def get_messages(recipient_username):
+    # Здесь вы должны извлечь сообщения из базы данных для данного пользователя
+    # Затем преобразовать их в формат JSON с датой и временем и вернуть их
+    recipient = get_user_by_username(recipient_username)
+    if not recipient:
+        return jsonify({'error': 'Пользователь не найден'}), 404
+
+    messages = Message.query.filter(
+        (Message.sender == current_user and Message.recipient == recipient) |
+        (Message.sender == recipient and Message.recipient == current_user)
+    ).order_by(Message.timestamp).all()
+
+    formatted_messages = [{'sender': message.sender.username,
+                           'message_text': message.message_text,
+                           'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+                          for message in messages]
+
+    return jsonify({'messages': formatted_messages})
+
+
+@user_blueprint.route('/mark_as_read', methods=['POST'])
+@login_required
+def mark_as_read():
+    new_notifications = NewMessageNotification.query.filter_by(user_id=current_user.id, is_read=False).all()
+
+    for notification in new_notifications:
+        notification.is_read = True
+
+    db.session.commit()
+
+    return jsonify({'success': True}), 200

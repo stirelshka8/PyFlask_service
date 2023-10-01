@@ -1,59 +1,155 @@
 {% extends 'layout.html' %}
 
+{% block style %}
+    .card-header h2 {
+      font-size: 24px;
+    }
+
+    #messageList li {
+      margin-bottom: 8px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+
+    #messageList li strong {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+
+    #message_text {
+      resize: none;
+    }
+{% endblock %}
+
 {% block body %}
   <div class="container mt-5">
     <h1 class="mb-4">Личные сообщения</h1>
 
-    <div class="card mb-4">
-      <div class="card-header">
-        <h2>Отправить сообщение</h2>
-      </div>
-      <div class="card-body">
-        <form method="POST" action="{{ url_for('user.send_message_route') }}">
-          <div class="form-group">
-            <label for="recipient_username">Кому отправляем:</label>
-            <input type="text" class="form-control" id="recipient_username" name="recipient_username" required>
-          </div>
-          <div class="form-group">
-            <label for="message_text">Сообщение:</label>
-            <textarea class="form-control" id="message_text" name="message_text" rows="4" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary">Отправить</button>
-        </form>
-      </div>
+    <div class="alert alert-info">
+      {% for notification in new_notifications %}
+        <p><strong>Новое сообщение от {{ notification.sender_username }}</strong></p>
+      {% endfor %}
+      <button class="btn btn-primary" id="markAsReadBtn">Прочитано</button>
     </div>
 
-    <div class="card mb-4">
-      <div class="card-header">
-        <h2>Полученные</h2>
-      </div>
-      <div class="card-body">
-        <ul class="list-group">
-          {% for message in received_messages %}
-            <li class="list-group-item">
-              <strong>От: {{ message.sender.username }}</strong>
-              <p>{{ message.message_text }}</p>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
 
-    <!-- Sent Messages -->
-    <div class="card">
-      <div class="card-header">
-        <h2>Отправленные</h2>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h2>Адресная книга</h2>
+          </div>
+          <div class="card-body">
+            <ul class="list-group">
+              <li><a href="/add_contact">Добавить контакт</a></li>
+              <label for="recipient_username">Выберите получателя:</label>
+              <select class="form-control" id="recipient_username" name="recipient_username">
+                <option value="">------------------</option>
+                {% for contact in address_book %}
+                  <option value="{{ contact.username }}">{{ contact.username }}</option>
+                {% endfor %}
+              </select>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div class="card-body">
-        <ul class="list-group">
-          {% for message in sent_messages %}
-            <li class="list-group-item">
-              <strong>Кому: {{ message.recipient.username }}</strong>
-              <p>{{ message.message_text }}</p>
-            </li>
-          {% endfor %}
-        </ul>
+
+      <div class="col-md-8">
+        <div id="chat" class="card" style="display: none;">
+          <div class="card-header">
+            <h2>Чат с <span id="selectedRecipient"></span></h2>
+          </div>
+          <div class="card-body" style="max-height: 400px; overflow-y: scroll;">
+            <ul class="list-group" id="messageList">
+            </ul>
+          </div>
+          <div class="card-footer">
+            <div class="form-group">
+              <textarea class="form-control" id="message_text" rows="4" required></textarea>
+              <button id="sendMessageBtn" class="btn btn-primary mt-2">Отправить</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    const recipientSelect = document.getElementById('recipient_username');
+    const chatDiv = document.getElementById('chat');
+    const selectedRecipientSpan = document.getElementById('selectedRecipient');
+    const messageList = document.getElementById('messageList');
+    const messageText = document.getElementById('message_text');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+
+    recipientSelect.addEventListener('change', () => {
+      const selectedRecipient = recipientSelect.value;
+      if (selectedRecipient) {
+        chatDiv.style.display = 'block';
+        selectedRecipientSpan.textContent = selectedRecipient;
+
+        fetch(`/get_messages/${selectedRecipient}`)
+          .then(response => response.json())
+          .then(data => {
+            messageList.innerHTML = '';
+
+            data.messages.forEach(message => {
+              const messageItem = document.createElement('li');
+              messageItem.innerHTML = `<strong>${message.sender} (${message.timestamp}):</strong> ${message.message_text}`;
+              messageList.appendChild(messageItem);
+            });
+          })
+          .catch(error => {
+            console.error('Ошибка при получении сообщений:', error);
+          });
+      } else {
+        chatDiv.style.display = 'none';
+      }
+    });
+
+    sendMessageBtn.addEventListener('click', () => {
+      const selectedRecipient = recipientSelect.value;
+      const message = messageText.value;
+      fetch('/send_message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipient_username: selectedRecipient,
+          message_text: message,
+        }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          messageText.value = '';
+          const messageItem = document.createElement('li');
+          messageItem.innerHTML = `<strong>Вы (${data.timestamp}):</strong> ${message}`;
+          messageList.appendChild(messageItem);
+        })
+        .catch(error => {
+          console.error('Ошибка при отправке сообщения:', error);
+        });
+    });
+
+    const markAsReadBtn = document.getElementById('markAsReadBtn');
+    markAsReadBtn.addEventListener('click', () => {
+      fetch('/mark_as_read', {
+        method: 'POST',
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+          }
+        })
+        .catch(error => {
+          console.error('Ошибка при отметке оповещений как прочитанных:', error);
+        });
+    });
+  </script>
 {% endblock %}
+
+
+

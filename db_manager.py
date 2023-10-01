@@ -21,7 +21,7 @@ class Message(db.Model):
         self.message_text = message_text
 
 
-def send_message(sender, recipient, message_text):
+def save_message(sender, recipient, message_text):
     new_message = Message(sender=sender, recipient=recipient, message_text=message_text)
     db.session.add(new_message)
     db.session.commit()
@@ -31,6 +31,26 @@ def get_user_messages(user):
     received_messages = Message.query.filter_by(recipient=user).all()
     sent_messages = Message.query.filter_by(sender=user).all()
     return received_messages, sent_messages
+
+
+def get_messages_between_users(user1, user2):
+    messages = Message.query.filter(
+        (Message.sender == user1) & (Message.recipient == user2) |
+        (Message.sender == user2) & (Message.recipient == user1)
+    ).order_by(Message.timestamp).all()
+    return messages
+
+
+class NewMessageNotification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_username = db.Column(db.String(255), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, user_id, sender_username):
+        self.user_id = user_id
+        self.sender_username = sender_username
 
 
 class User(db.Model, UserMixin):
@@ -54,6 +74,9 @@ class User(db.Model, UserMixin):
 
     def get_roles(self):
         return [role.name for role in self.roles]
+
+    def has_contact(self, other_user):
+        return self.contacts.filter_by(contact=other_user).first() is not None
 
 
 class Role(db.Model):
@@ -121,3 +144,23 @@ def create_user(name, email, username, password):
 
 def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
+
+
+class AddressBook(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    contact_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', foreign_keys=[user_id], backref='contacts')
+    contact = db.relationship('User', foreign_keys=[contact_id])
+
+
+def add_contact(user, contact):
+    if user != contact:
+        new_contact = AddressBook(user=user, contact=contact)
+        db.session.add(new_contact)
+        db.session.commit()
+
+
+def get_user_contacts(user):
+    contacts = AddressBook.query.filter_by(user=user).all()
+    return [contact.contact for contact in contacts]
