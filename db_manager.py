@@ -27,6 +27,8 @@ def save_message(sender, recipient, message_text):
     db.session.add(new_message)
     db.session.commit()
 
+    return new_message.id
+
 
 def get_user_messages(user):
     received_messages = Message.query.filter_by(recipient=user).all()
@@ -48,10 +50,13 @@ class NewMessageNotification(db.Model):
     sender_username = db.Column(db.String(255), nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    message_id = db.Column(db.Integer, db.ForeignKey('message.id'))
+    message = db.relationship('Message', backref='notification', foreign_keys=[message_id])
 
-    def __init__(self, user_id, sender_username):
+    def __init__(self, user_id, sender_username, message_id):
         self.user_id = user_id
         self.sender_username = sender_username
+        self.message_id = message_id
 
 
 class User(db.Model, UserMixin):
@@ -168,6 +173,16 @@ def add_contact(user, contact):
 def get_user_contacts(user):
     contacts = AddressBook.query.filter_by(user_id=user.id).all()
     return [contact.contact for contact in contacts]
+
+
+def has_unread_messages(user):
+    # Проверяем наличие непрочитанных уведомлений в NewMessageNotification
+    has_unread_notifications = NewMessageNotification.query.filter_by(user_id=user.id, is_read=False).first() is not None
+
+    # Проверяем наличие непрочитанных сообщений в Message
+    has_unread_messages = Message.query.filter_by(recipient=user, is_read=False).first() is not None
+
+    return has_unread_notifications or has_unread_messages
 
 
 

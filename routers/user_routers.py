@@ -235,17 +235,21 @@ def send_message_route():
     recipient = get_user_by_username(recipient_username)
 
     if recipient:
-        save_message(current_user, recipient, message_text)
+        # Сохраните сообщение и получите его id
+        new_message = save_message(current_user, recipient, message_text)
+
         timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
-        # Создайте оповещение о новом сообщении
-        new_notification = NewMessageNotification(user_id=recipient.id, sender_username=current_user.username)
+        # Создайте оповещение о новом сообщении с указанием message_id
+        new_notification = NewMessageNotification(user_id=recipient.id, sender_username=current_user.username,
+                                                  message_id=new_message)
         db.session.add(new_notification)
         db.session.commit()
 
         return jsonify({'timestamp': timestamp}), 201
     else:
         return jsonify({'error': 'Получатель не найден'}), 400
+
 
 
 @user_blueprint.route('/messages')
@@ -256,11 +260,6 @@ def messages():
 
     # Получите все оповещения о новых сообщениях для текущего пользователя
     new_notifications = NewMessageNotification.query.filter_by(user_id=current_user.id, is_read=False).all()
-
-    # Помечайте все непрочитанные уведомления как прочитанные
-    for notification in new_notifications:
-        notification.is_read = True
-        db.session.commit()
 
     # Получите список пользователей из адресной книги
     address_book_users = [contact.username for contact in address_book]
@@ -285,6 +284,13 @@ def get_messages(recipient_username):
         ((Message.sender == recipient) & (Message.recipient == current_user)) |
         ((Message.sender == current_user) & (Message.recipient == recipient))
     ).order_by(Message.timestamp).all()
+
+    new_notifications = NewMessageNotification.query.filter_by(user_id=current_user.id, is_read=False).all()
+
+    # # Помечайте все непрочитанные уведомления как прочитанные
+    for notification in new_notifications:
+        notification.is_read = True
+        db.session.commit()
 
     # Пометьте все непрочитанные сообщения как прочитанные
     for message in messages:
@@ -340,9 +346,11 @@ def add_to_address_book():
 @login_required
 def ignore_notification(notification_id):
     notification = NewMessageNotification.query.get(notification_id)
+    message_read = Message.query.get(notification.message_id)
 
     if notification and notification.user_id == current_user.id:
-        db.session.delete(notification)
+        notification.is_read = True
+        message_read.is_read = True
         db.session.commit()
 
         return jsonify({'success': True}), 200

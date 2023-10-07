@@ -5,7 +5,11 @@
       font-size: 24px;
     }
 
-    #messageList li {
+    .message-container {
+      text-align: center;
+    }
+
+    .message-group {
       margin-bottom: 8px;
       padding: 8px;
       border: 1px solid #ccc;
@@ -13,7 +17,7 @@
       background-color: #f9f9f9;
     }
 
-    #messageList li strong {
+    .message-group strong {
       font-weight: bold;
       margin-right: 5px;
     }
@@ -27,15 +31,24 @@
 <div class="container mt-5">
   <h1 class="mb-4">Личные сообщения</h1>
 
-  <div class="alert alert-info" style="display: {% if new_notifications %}block{% else %}none{% endif %}">
+  <div class="message-container">
+    {% set groupedNotifications = {} %}
     {% for notification in new_notifications %}
-      <p><strong>Новое сообщение от {{ notification.sender_username }}</strong></p>
-      {% if notification.sender_username in address_book_users %}
-        <button class="btn btn-primary read-button" data-recipient="{{ notification.sender_username }}" data-username="{{ notification.sender_username }}">Прочитать</button>
+      {% if notification.sender_username in groupedNotifications %}
+        {% set _ = groupedNotifications[notification.sender_username].append(notification) %}
       {% else %}
-        <button class="btn btn-primary add-to-address-book-button" data-recipient="{{ notification.sender_username }}" data-username="{{ notification.sender_username }}">Добавить в адресную книгу и прочитать</button>
+        {% set _ = groupedNotifications.update({notification.sender_username: [notification]}) %}
       {% endif %}
-      <button class="btn btn-secondary ignore-button" data-notification-id="{{ notification.id }}">Игнорировать</button>
+    {% endfor %}
+
+    {% for sender, notifications in groupedNotifications.items() %}
+      <div class="message-group">
+        <strong>Новые сообщения от {{ sender }}</strong>
+        <div class="btn-group">
+          <button class="btn btn-primary read-button" data-recipient="{{ sender }}" data-username="{{ sender }}">Прочитать</button>
+          <button class="btn btn-secondary ignore-button" data-notification-ids="{{ notifications|map(attribute='id')|join(',') }}">Игнорировать</button>
+        </div>
+      </div>
     {% endfor %}
   </div>
 
@@ -87,14 +100,14 @@
   const messageList = document.getElementById('messageList');
   const messageText = document.getElementById('message_text');
   const sendMessageBtn = document.getElementById('sendMessageBtn');
-  const notificationAlert = document.querySelector('.alert.alert-info');
+  const notificationContainer = document.querySelector('.message-container');
 
   // Функция для сохранения непрочитанных уведомлений в локальное хранилище
   function saveUnreadNotifications() {
     const unreadNotifications = [];
-    document.querySelectorAll('.alert.alert-info').forEach(alert => {
-      if (alert.style.display === 'block') {
-        unreadNotifications.push(alert.textContent);
+    document.querySelectorAll('.message-group').forEach(group => {
+      if (group.style.display === 'block') {
+        unreadNotifications.push(group.textContent);
       }
     });
     localStorage.setItem('unreadNotifications', JSON.stringify(unreadNotifications));
@@ -106,9 +119,9 @@
     unreadNotifications.forEach(notificationText => {
       // Создать уведомление с сохраненным текстом
       const notification = document.createElement('div');
-      notification.className = 'alert alert-info';
+      notification.className = 'message-group';
       notification.textContent = notificationText;
-      document.body.appendChild(notification);
+      notificationContainer.appendChild(notification);
     });
   }
 
@@ -187,63 +200,42 @@
             messageItem.innerHTML = `<strong>${message.sender} (${message.timestamp}):</strong> ${message.message_text}`;
             messageList.appendChild(messageItem);
           });
+
+          // Пометить уведомление как прочитанное
+          button.parentNode.style.display = 'none'; // Скрыть кнопку "Прочитать"
+          saveUnreadNotifications(); // Сохранить обновленные данные
         })
         .catch(error => {
           console.error('Ошибка при получении сообщений:', error);
         });
-
-      // Скрыть уведомление
-      notificationAlert.style.display = 'none';
-      saveUnreadNotifications(); // Сохранить обновленные данные
-    });
-  });
-
-  // Обработчик для кнопки "Добавить в адресную книгу"
-  document.querySelectorAll('.add-to-address-book-button').forEach(button => {
-    button.addEventListener('click', () => {
-      const senderUsername = button.getAttribute('data-recipient');
-      // Отправить запрос на сервер для добавления отправителя в адресную книгу
-      fetch('/add_to_address_book', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: senderUsername,
-        }),
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Выполнить дополнительные действия, например, скрыть уведомление
-            button.parentNode.style.display = 'none';
-            saveUnreadNotifications(); // Сохранить обновленные данные
-          }
-        })
-        .catch(error => {
-          console.error('Ошибка при добавлении в адресную книгу:', error);
-        });
-      // Скрыть уведомление
-      notificationAlert.style.display = 'none';
     });
   });
 
   // Обработчик для кнопки "Игнорировать"
   document.querySelectorAll('.ignore-button').forEach(button => {
     button.addEventListener('click', () => {
-      const notificationId = button.getAttribute('data-notification-id');
-      // Отправить запрос на сервер для игнорирования уведомления
-      fetch(`/ignore_notification/${notificationId}`, {method: 'POST'})
+      const notificationIds = button.getAttribute('data-notification-ids').split(',');
+
+      // Отправить запрос на сервер для игнорирования уведомлений
+      fetch(`/ignore_notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          notification_ids: notificationIds,
+        }),
+      })
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            // Выполнить дополнительные действия, например, скрыть уведомление
+            // Выполнить дополнительные действия, например, скрыть кнопку "Игнорировать"
             button.parentNode.style.display = 'none';
             saveUnreadNotifications(); // Сохранить обновленные данные
           }
         })
         .catch(error => {
-          console.error('Ошибка при игнорировании уведомления:', error);
+          console.error('Ошибка при игнорировании уведомлений:', error);
         });
     });
   });
