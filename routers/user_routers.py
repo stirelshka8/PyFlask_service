@@ -345,6 +345,7 @@ def add_to_address_book():
 @user_blueprint.route('/ignore_notification/<notification_id>', methods=['POST'])
 @login_required
 def ignore_notification(notification_id):
+    print(notification_id)
     notification = NewMessageNotification.query.get(notification_id)
     message_read = Message.query.get(notification.message_id)
 

@@ -1,30 +1,45 @@
 {% extends 'layout.html' %}
 
 {% block style %}
-    .card-header h2 {
-      font-size: 24px;
-    }
+  .card-header h2 {
+    font-size: 24px;
+  }
 
-    .message-container {
-      text-align: center;
-    }
+  .message-container {
+    text-align: center;
+  }
 
-    .message-group {
-      margin-bottom: 8px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background-color: #f9f9f9;
-    }
+  .message-group {
+    margin-bottom: 8px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
 
-    .message-group strong {
-      font-weight: bold;
-      margin-right: 5px;
-    }
+  .message-group strong {
+    font-weight: bold;
+    margin-right: 5px;
+  }
 
-    #message_text {
-      resize: none;
-    }
+  #message_text {
+    resize: none;
+  }
+
+  .message-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+
+  .message-actions a {
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    color: #007bff;
+    margin-right: 10px;
+  }
 {% endblock %}
 
 {% block body %}
@@ -42,11 +57,12 @@
     {% endfor %}
 
     {% for sender, notifications in groupedNotifications.items() %}
+
       <div class="message-group">
         <strong>Новые сообщения от {{ sender }}</strong>
-        <div class="btn-group">
-          <button class="btn btn-primary read-button" data-recipient="{{ sender }}" data-username="{{ sender }}">Прочитать</button>
-          <button class="btn btn-secondary ignore-button" data-notification-ids="{{ notifications|map(attribute='id')|join(',') }}">Игнорировать</button>
+        <div class="message-actions">
+          <a class="btn btn-primary read-button" href="/messages" data-recipient="{{ sender }}" data-username="{{ sender }}">Прочитать</a>
+          <a class="btn btn-secondary ignore-button" href="/messages" data-notification-ids="{{ notifications|map(attribute='id')|join(',') }}">Игнорировать</a>
         </div>
       </div>
     {% endfor %}
@@ -178,20 +194,17 @@
       });
   });
 
-  // Обработчик для кнопки "Прочитать"
-  document.querySelectorAll('.read-button').forEach(button => {
-    button.addEventListener('click', () => {
-      const recipientUsername = button.getAttribute('data-recipient');
+  // Обработчик для ссылки "Прочитать"
+  document.querySelectorAll('.read-button').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const recipientUsername = link.getAttribute('data-recipient');
 
-      // Очистить список сообщений перед отображением новых сообщений
       messageList.innerHTML = '';
 
-      // Отобразить чат и выбранного получателя
       chatDiv.style.display = 'block';
       selectedRecipientSpan.textContent = recipientUsername;
 
-      // Здесь вы можете выполнить AJAX-запрос для получения сообщений с выбранным пользователем
-      // Примерно так:
       fetch(`/get_messages/${recipientUsername}`)
         .then(response => response.json())
         .then(data => {
@@ -202,7 +215,7 @@
           });
 
           // Пометить уведомление как прочитанное
-          button.parentNode.style.display = 'none'; // Скрыть кнопку "Прочитать"
+          link.parentNode.style.display = 'none'; // Скрыть ссылку "Прочитать"
           saveUnreadNotifications(); // Сохранить обновленные данные
         })
         .catch(error => {
@@ -211,13 +224,14 @@
     });
   });
 
-  // Обработчик для кнопки "Игнорировать"
-  document.querySelectorAll('.ignore-button').forEach(button => {
-    button.addEventListener('click', () => {
-      const notificationIds = button.getAttribute('data-notification-ids').split(',');
+  // Обработчик для ссылки "Игнорировать"
+  document.querySelectorAll('.ignore-button').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const notificationIds = link.getAttribute('data-notification-ids').split(',');
 
       // Отправить запрос на сервер для игнорирования уведомлений
-      fetch(`/ignore_notifications`, {
+      fetch(`/ignore_notification/${notificationIds}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,9 +243,11 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            // Выполнить дополнительные действия, например, скрыть кнопку "Игнорировать"
-            button.parentNode.style.display = 'none';
+            // Выполнить дополнительные действия, например, скрыть ссылку "Игнорировать"
+            link.parentNode.style.display = 'none';
             saveUnreadNotifications(); // Сохранить обновленные данные
+            // Перезагрузить страницу
+            window.location.reload(true);
           }
         })
         .catch(error => {
@@ -239,6 +255,6 @@
         });
     });
   });
-
 </script>
+
 {% endblock %}

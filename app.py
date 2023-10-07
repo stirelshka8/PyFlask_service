@@ -74,9 +74,8 @@ Session(app)
 
 
 def get_unread_message_count(user):
-    # Получите количество непрочитанных сообщений для данного пользователя
     try:
-        unread_message_count = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
+        unread_message_count = Message.query.filter_by(recipient_id=user.id, is_read=False).count()
     except AttributeError:
         unread_message_count = 0
 
@@ -99,12 +98,6 @@ def about():
 
 
 def count_message():
-    if current_user.is_authenticated:  # Проверьте, аутентифицирован ли текущий пользователь
-        unread_message_count = get_unread_message_count(current_user)  # Передайте текущего пользователя в функцию
-    else:
-        unread_message_count = 0  # Если пользователь не аутентифицирован, установите счетчик непрочитанных сообщений
-        # в 0
-
     return {'get_unread_message_count': get_unread_message_count(current_user)}
 
 
@@ -154,8 +147,6 @@ def add_contact_page():
         else:
             flash('Пользователь не найден', 'danger')
     return render_template('add_contact.html')
-
-
 
 
 if __name__ == '__main__':
