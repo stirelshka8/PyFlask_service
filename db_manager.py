@@ -14,6 +14,7 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
+    is_read = db.Column(db.Boolean, default=False)
 
     def __init__(self, sender, recipient, message_text):
         self.sender = sender
@@ -64,6 +65,7 @@ class User(db.Model, UserMixin):
     articles = db.relationship('Articles', backref='author')
     roles = db.relationship('Role', secondary='user_roles')
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
+    user_address_books = db.relationship('AddressBook', foreign_keys='AddressBook.user_id', backref='owner_user')
 
     def is_active(self):
         return True
@@ -76,7 +78,7 @@ class User(db.Model, UserMixin):
         return [role.name for role in self.roles]
 
     def has_contact(self, other_user):
-        return self.contacts.filter_by(contact=other_user).first() is not None
+        return AddressBook.query.filter_by(user_id=self.id, contact_id=other_user.id).first() is not None
 
 
 class Role(db.Model):
@@ -150,17 +152,22 @@ class AddressBook(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     contact_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', foreign_keys=[user_id], backref='contacts')
+    user = db.relationship('User', foreign_keys=[user_id], backref='address_books')
     contact = db.relationship('User', foreign_keys=[contact_id])
 
 
 def add_contact(user, contact):
     if user != contact:
-        new_contact = AddressBook(user=user, contact=contact)
-        db.session.add(new_contact)
-        db.session.commit()
+        # Проверка, что контакт еще не добавлен в адресную книгу
+        if not user.has_contact(contact):
+            new_contact = AddressBook(user_id=user.id, contact_id=contact.id)
+            db.session.add(new_contact)
+            db.session.commit()
 
 
 def get_user_contacts(user):
-    contacts = AddressBook.query.filter_by(user=user).all()
+    contacts = AddressBook.query.filter_by(user_id=user.id).all()
     return [contact.contact for contact in contacts]
+
+
+

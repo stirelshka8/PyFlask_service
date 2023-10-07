@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash, send_from_directory, redirect, url_for, request
 
-from db_manager import db, User, get_user_by_username, add_contact
+from db_manager import db, User, get_user_by_username, add_contact, Message
 from flask_principal import Principal, Permission, RoleNeed
 from routers.articles_routers import article_blueprint
 from flask_login import login_required, current_user
@@ -73,6 +73,16 @@ else:
 Session(app)
 
 
+def get_unread_message_count(user):
+    # Получите количество непрочитанных сообщений для данного пользователя
+    try:
+        unread_message_count = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
+    except AttributeError:
+        unread_message_count = 0
+
+    return unread_message_count
+
+
 @app.route('/')
 def index():
     return render_template('home.html')
@@ -86,6 +96,21 @@ def fav():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+
+def count_message():
+    if current_user.is_authenticated:  # Проверьте, аутентифицирован ли текущий пользователь
+        unread_message_count = get_unread_message_count(current_user)  # Передайте текущего пользователя в функцию
+    else:
+        unread_message_count = 0  # Если пользователь не аутентифицирован, установите счетчик непрочитанных сообщений
+        # в 0
+
+    return {'get_unread_message_count': get_unread_message_count(current_user)}
+
+
+@app.context_processor
+def inject_data():
+    return count_message()
 
 
 @login_manager.user_loader
@@ -129,6 +154,8 @@ def add_contact_page():
         else:
             flash('Пользователь не найден', 'danger')
     return render_template('add_contact.html')
+
+
 
 
 if __name__ == '__main__':

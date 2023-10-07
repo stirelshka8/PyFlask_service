@@ -27,9 +27,9 @@
               <li><a href="/moderate">[ MODERATE ]</a></li>
             {% endif %}
             <li><a href="/dashboard">[ {{ session.username }} ]</a></li>
-            <li><a href="/messages">[ ЛС ]</a></li>
+            {% set unread_message_count = get_unread_message_count | int %}
+            <li><a href="/messages">[ ЛС {% if unread_message_count > 0 %}<span class="badge">{{ unread_message_count }}</span>{% endif %} {% if unread_message_count == 0 %}{% endif %}]</a></li>
             <li><a href="/logout">Выйти</a></li>
-
           {% else %}
             <li><a href="/login">Войти</a></li>
           {% endif %}

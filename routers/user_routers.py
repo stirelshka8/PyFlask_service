@@ -1,12 +1,11 @@
-from datetime import datetime
-
 from flask import render_template, flash, redirect, request, url_for, session, Blueprint, jsonify
 from forms import RegisterForm, ArticleForm, UpdateUserPass, UpdateUser
 from db_manager import db, Articles, User, DeletedArticles, Role, get_user_messages, get_user_contacts, \
-    get_user_by_username, Message, get_messages_between_users, save_message, NewMessageNotification
+    get_user_by_username, Message, save_message, NewMessageNotification, add_contact
 from flask_login import login_required, current_user, login_user
 from flask_paginate import Pagination
 from passlib.hash import sha256_crypt
+from datetime import datetime
 import secrets
 import os
 
@@ -258,43 +257,115 @@ def messages():
     # Получите все оповещения о новых сообщениях для текущего пользователя
     new_notifications = NewMessageNotification.query.filter_by(user_id=current_user.id, is_read=False).all()
 
+    # Помечайте все непрочитанные уведомления как прочитанные
+    for notification in new_notifications:
+        notification.is_read = True
+        db.session.commit()
+
+    # Получите список пользователей из адресной книги
+    address_book_users = [contact.username for contact in address_book]
+
     return render_template('messages.html',
                            received_messages=received_messages,
                            sent_messages=sent_messages,
                            address_book=address_book,
-                           new_notifications=new_notifications)
+                           new_notifications=new_notifications,
+                           address_book_users=address_book_users)
 
 
 @user_blueprint.route('/get_messages/<recipient_username>', methods=['GET'])
 @login_required
 def get_messages(recipient_username):
-    # Здесь вы должны извлечь сообщения из базы данных для данного пользователя
-    # Затем преобразовать их в формат JSON с датой и временем и вернуть их
     recipient = get_user_by_username(recipient_username)
     if not recipient:
         return jsonify({'error': 'Пользователь не найден'}), 404
 
+    # Извлеките все сообщения между текущим пользователем и получателем
     messages = Message.query.filter(
-        (Message.sender == current_user and Message.recipient == recipient) |
-        (Message.sender == recipient and Message.recipient == current_user)
+        ((Message.sender == recipient) & (Message.recipient == current_user)) |
+        ((Message.sender == current_user) & (Message.recipient == recipient))
     ).order_by(Message.timestamp).all()
+
+    # Пометьте все непрочитанные сообщения как прочитанные
+    for message in messages:
+        if not message.is_read and message.recipient == current_user:
+            message.is_read = True
+            db.session.commit()
 
     formatted_messages = [{'sender': message.sender.username,
                            'message_text': message.message_text,
-                           'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+                           'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                           'is_read': message.is_read}
                           for message in messages]
 
     return jsonify({'messages': formatted_messages})
 
 
-@user_blueprint.route('/mark_as_read', methods=['POST'])
+@user_blueprint.route('/mark_as_read/<notification_id>', methods=['POST'])
 @login_required
-def mark_as_read():
-    new_notifications = NewMessageNotification.query.filter_by(user_id=current_user.id, is_read=False).all()
+def mark_as_read(notification_id):
+    notification = NewMessageNotification.query.get(notification_id)
 
-    for notification in new_notifications:
+    if notification and notification.user_id == current_user.id:
         notification.is_read = True
+        db.session.commit()
 
-    db.session.commit()
+        return jsonify({'success': True}), 200
+    else:
+        return jsonify({'error': 'Уведомление не найдено'}), 404
+
+
+@user_blueprint.route('/add_to_address_book', methods=['POST'])
+@login_required
+def add_to_address_book():
+    if request.method == 'POST':
+        username = request.json.get('username')
+        user_to_add = User.query.filter_by(username=username).first()
+
+        if user_to_add:
+            if user_to_add != current_user:  # Проверьте, что пользователь не пытается добавить себя в контакты
+                add_contact(current_user, user_to_add)
+                flash(f'Пользователь {username} добавлен в адресную книгу.', 'success')
+            else:
+                flash('Вы не можете добавить себя в адресную книгу.', 'danger')
+        else:
+            flash('Пользователь не найден.', 'danger')
+
+        return jsonify({'success': True}), 200
+
+    return render_template('add_contact.html')
+
+
+@user_blueprint.route('/ignore_notification/<notification_id>', methods=['POST'])
+@login_required
+def ignore_notification(notification_id):
+    notification = NewMessageNotification.query.get(notification_id)
+
+    if notification and notification.user_id == current_user.id:
+        db.session.delete(notification)
+        db.session.commit()
+
+        return jsonify({'success': True}), 200
+    else:
+        return jsonify({'error': 'Уведомление не найдено'}), 404
+
+
+@user_blueprint.route('/read_message/<recipient_username>', methods=['GET'])
+@login_required
+def read_message(recipient_username):
+    recipient = get_user_by_username(recipient_username)
+    if not recipient:
+        return jsonify({'error': 'Пользователь не найден'}), 404
+
+    messages = Message.query.filter(
+        (Message.sender == recipient and Message.recipient == current_user) &
+        (Message.is_read == False)  # Учитывайте только непрочитанные сообщения
+    ).all()
+
+    for message in messages:
+        message.is_read = True  # Установите статус сообщения как прочитанное
+        db.session.commit()
 
     return jsonify({'success': True}), 200
+
+
