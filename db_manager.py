@@ -163,7 +163,6 @@ class AddressBook(db.Model):
 
 def add_contact(user, contact):
     if user != contact:
-        # Проверка, что контакт еще не добавлен в адресную книгу
         if not user.has_contact(contact):
             new_contact = AddressBook(user_id=user.id, contact_id=contact.id)
             db.session.add(new_contact)
@@ -176,10 +175,8 @@ def get_user_contacts(user):
 
 
 def has_unread_messages(user):
-    # Проверяем наличие непрочитанных уведомлений в NewMessageNotification
     has_unread_notifications = NewMessageNotification.query.filter_by(user_id=user.id, is_read=False).first() is not None
 
-    # Проверяем наличие непрочитанных сообщений в Message
     has_unread_messages = Message.query.filter_by(recipient=user, is_read=False).first() is not None
 
     return has_unread_notifications or has_unread_messages
